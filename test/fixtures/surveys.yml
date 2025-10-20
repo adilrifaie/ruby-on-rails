@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  scale: one
+  user: one
+  title: MyString
+  status: MyString
+  response_count: 1
+
+two:
+  scale: two
+  user: two
+  title: MyString
+  status: MyString
+  response_count: 1

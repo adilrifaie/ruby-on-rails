@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  survey: one
+  participant_name: MyString
+  answers: MyText
+  submitted_at: 2025-10-20 23:41:56
+
+two:
+  survey: two
+  participant_name: MyString
+  answers: MyText
+  submitted_at: 2025-10-20 23:41:56
