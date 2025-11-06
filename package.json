@@ -1,0 +1,38 @@
+{
+  "name": "healthcare_scale_platform",
+  "version": "1.0.0",
+  "description": "A comprehensive Ruby on Rails API application for managing healthcare assessment scales, surveys, responses, and statistical analyses. This platform enables researchers, administrators, and students to create, distribute, and analyze healthcare assessment scales with a credit-based system.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:chrome": "cypress run --browser chrome",
+    "cy:run:cucumber": "cypress run --spec \"cypress/e2e/**/*.feature\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adilrifaie/ruby-on-rails.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adilrifaie/ruby-on-rails/issues"
+  },
+  "homepage": "https://github.com/adilrifaie/ruby-on-rails#readme",
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^20.0.0",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
+    "cypress": "^13.6.0"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": "cypress/e2e/**/*.{js,ts}",
+    "filterSpecs": true,
+    "omitFiltered": true
+  }
+}
