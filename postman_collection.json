@@ -1,0 +1,846 @@
+{
+    "info": {
+        "_postman_id": "a9e8c0f8-90a8-4e6f-8f9a-3c2e1b0a6d5a",
+        "name": "Healthcare Scale Platform",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{jwt_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Users",
+            "item": [
+                {
+                    "name": "Get all users",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "users"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get a single user",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/users/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "users",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create a user",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user\": {\n        \"email\": \"test@example.com\",\n        \"password\": \"password\",\n        \"role\": \"researcher\",\n        \"credits\": 100\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "users"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Scales",
+            "item": [
+                {
+                    "name": "Get all scales",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/scales",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "scales"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create a scale",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"scale\": {\n        \"user_id\": 1,\n        \"title\": \"My new scale\",\n        \"description\": \"This is a new scale for testing purposes\",\n        \"version\": \"1.0\",\n        \"status\": \"draft\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/scales",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "scales"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Publish a scale",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/scales/:id/publish",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "scales",
+                                ":id",
+                                "publish"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Surveys",
+            "item": [
+                {
+                    "name": "Get all surveys",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/surveys",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "surveys"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create a survey",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"survey\": {\n        \"scale_id\": 1,\n        \"user_id\": 1,\n        \"title\": \"My new survey\",\n        \"status\": \"draft\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/surveys",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "surveys"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Responses",
+            "item": [
+                {
+                    "name": "Create a response",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"response\": {\n        \"survey_id\": 1,\n        \"participant_name\": \"John Doe\",\n        \"answers\": \"{\\\"q1\\\": \\\"a\\\", \\\"q2\\\": \\\"b\\\"}\",\n        \"submitted_at\": \"2025-10-28T12:00:00Z\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/responses",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "responses"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Export a response",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/responses/:id/export",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "responses",
+                                ":id",
+                                "export"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Analyses",
+            "item": [
+                {
+                    "name": "Create an analysis",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"analysis\": {\n        \"survey_id\": 1,\n        \"user_id\": 1,\n        \"analysis_type\": \"descriptive\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/analyses",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "analyses"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get an analysis report",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/analyses/:id/report",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "analyses",
+                                ":id",
+                                "report"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Google AI Studio",
+            "item": [
+                {
+                    "name": "Text Generation - Healthcare Recommendation",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// Test 1: Check if status code is 200",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "// Test 2: Response has required structure",
+                                    "pm.test(\"Response has candidates array\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('candidates');",
+                                    "    pm.expect(jsonData.candidates).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "// Test 3: Check if text content exists",
+                                    "pm.test(\"Response contains generated text\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.candidates[0].content.parts[0].text).to.exist;",
+                                    "    pm.expect(jsonData.candidates[0].content.parts[0].text.length).to.be.above(0);",
+                                    "});",
+                                    "",
+                                    "// Test 4: Validate response time",
+                                    "pm.test(\"Response time is less than 5000ms\", function () {",
+                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                                    "});",
+                                    "",
+                                    "// Test 5: Check content safety ratings",
+                                    "pm.test(\"Content has safety ratings\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.candidates[0].safetyRatings) {",
+                                    "        pm.expect(jsonData.candidates[0].safetyRatings).to.be.an('array');",
+                                    "    }",
+                                    "});",
+                                    "",
+                                    "// Display the AI response in console",
+                                    "var jsonData = pm.response.json();",
+                                    "console.log(\"AI Generated Text:\");",
+                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"As a healthcare IT consultant, provide 3 specific recommendations for improving patient data security in a hospital system. Include technical implementation details.\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.7,\n        \"maxOutputTokens\": 500,\n        \"topP\": 0.95\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
+                            "protocol": "https",
+                            "host": [
+                                "generativelanguage",
+                                "googleapis",
+                                "com"
+                            ],
+                            "path": [
+                                "v1beta",
+                                "models",
+                                "gemini-pro:generateContent"
+                            ],
+                            "query": [
+                                {
+                                    "key": "key",
+                                    "value": "{{google_ai_api_key}}"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Data Processing - Survey Response Analysis",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// Test 1: Check if status code is 200",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "// Test 2: Response contains analysis",
+                                    "pm.test(\"AI provided analysis\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text;",
+                                    "    pm.expect(aiResponse).to.include('patient');",
+                                    "});",
+                                    "",
+                                    "// Test 3: Response contains structured data",
+                                    "pm.test(\"Response contains key insights\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text.toLowerCase();",
+                                    "    // Check if AI identified patterns in the data",
+                                    "    var hasInsights = aiResponse.includes('satisfaction') || ",
+                                    "                      aiResponse.includes('score') || ",
+                                    "                      aiResponse.includes('trend');",
+                                    "    pm.expect(hasInsights).to.be.true;",
+                                    "});",
+                                    "",
+                                    "// Display analysis in console",
+                                    "var jsonData = pm.response.json();",
+                                    "console.log(\"AI Analysis Result:\");",
+                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"Analyze the following patient satisfaction survey responses and provide insights:\\n\\nResponses:\\n1. Patient A: 'The waiting time was too long, but the staff was very friendly.' - Score: 3/5\\n2. Patient B: 'Excellent care and quick service.' - Score: 5/5\\n3. Patient C: 'Doctors were knowledgeable but the facility needs updating.' - Score: 4/5\\n\\nProvide: 1) Main themes, 2) Average satisfaction level, 3) Priority improvement areas\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.4,\n        \"maxOutputTokens\": 400\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
+                            "protocol": "https",
+                            "host": [
+                                "generativelanguage",
+                                "googleapis",
+                                "com"
+                            ],
+                            "path": [
+                                "v1beta",
+                                "models",
+                                "gemini-pro:generateContent"
+                            ],
+                            "query": [
+                                {
+                                    "key": "key",
+                                    "value": "{{google_ai_api_key}}"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Test Automation - Generate Test Cases",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// Test 1: Successful response",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "// Test 2: AI generated test cases",
+                                    "pm.test(\"Response contains test cases\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text.toLowerCase();",
+                                    "    var hasTestCases = aiResponse.includes('test') || ",
+                                    "                       aiResponse.includes('scenario') ||",
+                                    "                       aiResponse.includes('case');",
+                                    "    pm.expect(hasTestCases).to.be.true;",
+                                    "});",
+                                    "",
+                                    "// Test 3: Extract and save test scenarios",
+                                    "pm.test(\"AI can generate structured test scenarios\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    var generatedText = jsonData.candidates[0].content.parts[0].text;",
+                                    "    ",
+                                    "    // Save to environment for potential use in other tests",
+                                    "    pm.environment.set(\"ai_generated_test_cases\", generatedText);",
+                                    "    ",
+                                    "    pm.expect(generatedText.length).to.be.above(100);",
+                                    "});",
+                                    "",
+                                    "// Display generated test cases",
+                                    "var jsonData = pm.response.json();",
+                                    "console.log(\"AI Generated Test Cases:\");",
+                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"Generate 5 test cases for a healthcare survey creation API endpoint that accepts: title (string), description (string), scale_id (integer), user_id (integer), and status (enum: draft/active/completed). Include positive, negative, and edge cases.\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.6,\n        \"maxOutputTokens\": 600\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
+                            "protocol": "https",
+                            "host": [
+                                "generativelanguage",
+                                "googleapis",
+                                "com"
+                            ],
+                            "path": [
+                                "v1beta",
+                                "models",
+                                "gemini-pro:generateContent"
+                            ],
+                            "query": [
+                                {
+                                    "key": "key",
+                                    "value": "{{google_ai_api_key}}"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000"
+        },
+        {
+            "key": "google_ai_api_key",
+            "value": "YOUR_API_KEY_HERE"
+        }
+    ]
+}
+
