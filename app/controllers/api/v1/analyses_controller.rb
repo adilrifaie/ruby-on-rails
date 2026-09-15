@@ -23,7 +23,7 @@ module Api
       private
 
       def analysis_params
-        params.require(:analysis).permit(:survey_id, :analysis_type)
+        params.require(:analysis).permit(:survey_id, :analysis_type, :question_a_id, :question_b_id)
       end
     end
   end
