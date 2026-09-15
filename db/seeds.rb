@@ -29,8 +29,24 @@ scale1 = Scale.create!(
   title: 'Depression Scale',
   description: 'Measures depression levels',
   version: '1.0',
-  status: 'draft'
+  status: 'draft',
+  scoring_bands: [
+    { 'label' => 'Minimal', 'min' => 0, 'max' => 4 },
+    { 'label' => 'Mild', 'min' => 5, 'max' => 9 },
+    { 'label' => 'Moderate', 'min' => 10, 'max' => 14 },
+    { 'label' => 'Severe', 'min' => 15, 'max' => 20 }
+  ]
 )
+
+[
+  { text: 'Little interest or pleasure in doing things', position: 1 },
+  { text: 'Feeling down, depressed, or hopeless', position: 2 },
+  { text: 'Trouble falling or staying asleep', position: 3 },
+  { text: 'Feeling tired or having little energy', position: 4 },
+  { text: 'Poor appetite or overeating', position: 5 }
+].each do |attrs|
+  scale1.questions.create!(attrs.merge(min_value: 0, max_value: 4))
+end
 
 scale2 = Scale.create!(
   user: user1,
@@ -53,15 +69,15 @@ survey1 = Survey.create!(
 Response.create!(
   survey: survey1,
   participant_name: 'John Doe',
-  answers: '1,2,3,4,5',
-  submitted_at: Time.now
+  submitted_at: Time.now,
+  answers_attributes: scale1.questions.order(:position).map.with_index { |q, i| { question_id: q.id, value: i % (q.max_value + 1) } }
 )
 
 Response.create!(
   survey: survey1,
   participant_name: 'Jane Smith',
-  answers: '5,4,3,2,1',
-  submitted_at: Time.now
+  submitted_at: Time.now,
+  answers_attributes: scale1.questions.order(:position).map.with_index { |q, i| { question_id: q.id, value: (q.max_value - i) % (q.max_value + 1) } }
 )
 
 # Test analizi

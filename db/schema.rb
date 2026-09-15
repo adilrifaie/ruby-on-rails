@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_20_204207) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_15_074857) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,10 +26,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_204207) do
     t.index ["user_id"], name: "index_analyses_on_user_id"
   end
 
+  create_table "answers", force: :cascade do |t|
+    t.bigint "response_id", null: false
+    t.bigint "question_id", null: false
+    t.integer "value", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_answers_on_question_id"
+    t.index ["response_id", "question_id"], name: "index_answers_on_response_id_and_question_id", unique: true
+    t.index ["response_id"], name: "index_answers_on_response_id"
+  end
+
+  create_table "questions", force: :cascade do |t|
+    t.bigint "scale_id", null: false
+    t.text "text", null: false
+    t.integer "position", null: false
+    t.integer "min_value", default: 0, null: false
+    t.integer "max_value", default: 4, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scale_id", "position"], name: "index_questions_on_scale_id_and_position", unique: true
+    t.index ["scale_id"], name: "index_questions_on_scale_id"
+  end
+
   create_table "responses", force: :cascade do |t|
     t.integer "survey_id", null: false
     t.string "participant_name"
-    t.text "answers"
     t.datetime "submitted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -45,6 +67,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_204207) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "scoring_bands", default: [], null: false
     t.index ["user_id"], name: "index_scales_on_user_id"
   end
 
@@ -71,6 +94,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_204207) do
 
   add_foreign_key "analyses", "surveys"
   add_foreign_key "analyses", "users"
+  add_foreign_key "answers", "questions"
+  add_foreign_key "answers", "responses"
+  add_foreign_key "questions", "scales"
   add_foreign_key "responses", "surveys"
   add_foreign_key "scales", "users"
   add_foreign_key "surveys", "scales"

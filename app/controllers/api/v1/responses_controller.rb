@@ -24,7 +24,10 @@ module Api
       private
 
       def response_params
-        params.require(:response).permit(:survey_id, :participant_name, :answers, :submitted_at)
+        params.require(:response).permit(
+          :survey_id, :participant_name, :submitted_at,
+          answers_attributes: [ :question_id, :value ]
+        )
       end
     end
   end

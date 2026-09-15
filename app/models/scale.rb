@@ -1,6 +1,7 @@
 class Scale < ApplicationRecord
   belongs_to :user
   has_many :surveys, dependent: :destroy
+  has_many :questions, -> { order(:position) }, dependent: :destroy
   
   validates :title, presence: true
   validates :identifier, uniqueness: true
