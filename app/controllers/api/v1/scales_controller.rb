@@ -2,29 +2,29 @@ module Api
   module V1
     class ScalesController < ApplicationController
       def index
-        scales = Scale.includes(:user).all
-        render json: scales, include: :user
+        @scales = Scale.includes(:user).all
       end
-      
+
       def create
-        scale = Scale.new(scale_params)
-        if scale.save
-          render json: scale, status: :created
+        @scale = current_user.scales.new(scale_params)
+        if @scale.save
+          render :show, status: :created
         else
-          render json: { errors: scale.errors }, status: :unprocessable_entity
+          render json: { errors: @scale.errors }, status: :unprocessable_entity
         end
       end
-      
+
       def publish
-        scale = Scale.find(params[:id])
-        scale.publish
-        render json: scale
+        @scale = Scale.find(params[:id])
+        authorize @scale
+        @scale.publish
+        render :show
       end
-      
+
       private
-      
+
       def scale_params
-        params.require(:scale).permit(:user_id, :title, :description, :version, :status)
+        params.require(:scale).permit(:title, :description, :version)
       end
     end
   end
