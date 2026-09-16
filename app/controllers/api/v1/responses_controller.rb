@@ -3,6 +3,12 @@ module Api
     class ResponsesController < ApplicationController
       skip_before_action :authenticate_request!, only: :create
 
+      def index
+        survey = Survey.find(params[:survey_id])
+        authorize survey, :update?
+        @responses = survey.responses.order(:id)
+      end
+
       def create
         response = Response.new(response_params)
         if response.save

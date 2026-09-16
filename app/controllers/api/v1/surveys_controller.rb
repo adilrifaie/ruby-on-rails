@@ -1,6 +1,8 @@
 module Api
   module V1
     class SurveysController < ApplicationController
+      skip_before_action :authenticate_request!, only: :show
+
       def index
         page = [ (params[:page] || 1).to_i, 1 ].max
         per = [ (params[:per] || 25).to_i, 1 ].max

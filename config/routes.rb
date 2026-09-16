@@ -10,7 +10,7 @@ Rails.application.routes.draw do
         resources :questions, only: [:create, :update, :destroy]
       end
       resources :surveys, only: [:index, :show, :create, :update, :destroy]
-      resources :responses, only: [:create, :show] do
+      resources :responses, only: [:index, :create, :show] do
         member do
           get :export
         end

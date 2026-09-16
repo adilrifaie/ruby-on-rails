@@ -5,6 +5,9 @@ json.response_count survey.response_count
 json.created_at survey.created_at
 json.scale do
   json.partial! "api/v1/scales/scale", scale: survey.scale
+  json.questions survey.scale.questions.order(:position) do |question|
+    json.partial! "api/v1/questions/question", question: question
+  end
 end
 json.user do
   json.partial! "api/v1/users/user", user: survey.user
