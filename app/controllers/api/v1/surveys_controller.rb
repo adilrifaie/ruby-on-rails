@@ -2,7 +2,13 @@ module Api
   module V1
     class SurveysController < ApplicationController
       def index
-        @surveys = Survey.includes(:scale, :user).all
+        page = [ (params[:page] || 1).to_i, 1 ].max
+        per = [ (params[:per] || 25).to_i, 1 ].max
+        @surveys = Survey.includes(:scale, :user).order(:id).offset((page - 1) * per).limit(per)
+      end
+
+      def show
+        @survey = Survey.find(params[:id])
       end
 
       def create
@@ -14,6 +20,27 @@ module Api
           render :create, status: :created
         else
           render json: { errors: @survey.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def update
+        @survey = Survey.find(params[:id])
+        authorize @survey
+        if @survey.update(survey_params)
+          render :show
+        else
+          render json: { errors: @survey.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def destroy
+        @survey = Survey.find(params[:id])
+        authorize @survey
+        if @survey.responses.exists?
+          render json: { error: "cannot delete a survey that already has responses" }, status: :unprocessable_entity
+        else
+          @survey.destroy
+          head :no_content
         end
       end
 

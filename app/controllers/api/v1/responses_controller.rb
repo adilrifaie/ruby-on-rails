@@ -15,6 +15,11 @@ module Api
         end
       end
 
+      def show
+        @response = Response.find(params[:id])
+        authorize @response
+      end
+
       def export
         response = Response.find(params[:id])
         authorize response

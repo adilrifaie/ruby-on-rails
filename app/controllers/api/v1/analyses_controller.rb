@@ -1,6 +1,17 @@
 module Api
   module V1
     class AnalysesController < ApplicationController
+      def index
+        page = [ (params[:page] || 1).to_i, 1 ].max
+        per = [ (params[:per] || 25).to_i, 1 ].max
+        @analyses = current_user.analyses.order(:id).offset((page - 1) * per).limit(per)
+      end
+
+      def show
+        @analysis = Analysis.find(params[:id])
+        authorize @analysis
+      end
+
       def create
         analysis = Analysis.new(analysis_params)
         analysis.user = current_user

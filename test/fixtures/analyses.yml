@@ -3,13 +3,11 @@
 one:
   survey: one
   user: one
-  analysis_type: MyString
-  results: MyText
-  credits_used: 1
+  analysis_type: descriptive
+  credits_used: 5
 
 two:
   survey: two
   user: two
-  analysis_type: MyString
-  results: MyText
-  credits_used: 1
+  analysis_type: descriptive
+  credits_used: 5

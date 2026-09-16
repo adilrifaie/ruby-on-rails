@@ -3,13 +3,13 @@
 one:
   scale: one
   user: one
-  title: MyString
-  status: MyString
-  response_count: 1
+  title: October Cohort Survey
+  status: active
+  response_count: 0
 
 two:
   scale: two
   user: two
-  title: MyString
-  status: MyString
-  response_count: 1
+  title: November Cohort Survey
+  status: active
+  response_count: 0

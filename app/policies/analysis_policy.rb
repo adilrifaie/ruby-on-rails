@@ -3,6 +3,10 @@ class AnalysisPolicy < ApplicationPolicy
     record.survey.user_id == user.id
   end
 
+  def show?
+    owner?
+  end
+
   def report?
     owner?
   end

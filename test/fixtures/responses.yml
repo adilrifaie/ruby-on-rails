@@ -2,12 +2,10 @@
 
 one:
   survey: one
-  participant_name: MyString
-  answers: MyText
-  submitted_at: 2025-10-20 23:41:56
+  participant_name: Participant One
+  submitted_at: 2026-01-10 10:00:00
 
 two:
   survey: two
-  participant_name: MyString
-  answers: MyText
-  submitted_at: 2025-10-20 23:41:56
+  participant_name: Participant Two
+  submitted_at: 2026-01-11 10:00:00

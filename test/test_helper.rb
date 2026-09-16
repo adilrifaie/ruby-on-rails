@@ -5,11 +5,14 @@ require "rails/test_help"
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors)
+    parallelize(workers: 1)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+    def auth_headers(user)
+      { "Authorization" => "Bearer #{JsonWebToken.encode(user_id: user.id)}" }
+    end
   end
 end

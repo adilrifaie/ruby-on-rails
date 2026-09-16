@@ -2,16 +2,16 @@
 
 one:
   user: one
-  title: MyString
-  description: MyText
-  identifier: MyString
-  version: MyString
-  status: MyString
+  title: PHQ-9 Depression Scale
+  description: A 9-item depression screening scale
+  identifier: SDP-2026-AAA00001
+  version: "1.0"
+  status: draft
 
 two:
   user: two
-  title: MyString
-  description: MyText
-  identifier: MyString
-  version: MyString
-  status: MyString
+  title: GAD-7 Anxiety Scale
+  description: A 7-item anxiety screening scale
+  identifier: SDP-2026-BBB00002
+  version: "1.0"
+  status: draft
