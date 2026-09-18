@@ -62,7 +62,7 @@ Cypress.Commands.add('apiCreateScale', (token, title, questions = []) => {
           question: { text: q.text, position: i + 1, min_value: q.min_value, max_value: q.max_value }
         }).its('status').should('eq', 201);
       });
-      return scale;
+      return cy.wrap(scale, { log: false });
     });
 });
 
