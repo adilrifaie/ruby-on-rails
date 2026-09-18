@@ -7,7 +7,7 @@ module.exports = defineConfig({
   e2e: {
     specPattern: "cypress/e2e/**/*.feature",
     supportFile: "cypress/support/e2e.js",
-    baseUrl: "http://localhost:3000",
+    baseUrl: "http://localhost:5173",
     async setupNodeEvents(on, config) {
       const bundler = createBundler({
         plugins: [createEsbuildPlugin(config)],

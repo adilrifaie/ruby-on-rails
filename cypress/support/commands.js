@@ -1,126 +1,106 @@
-// ***********************************************
-// Custom commands for the Healthcare Platform
-// ***********************************************
+// Custom commands for the Healthcare Scale Platform (Rails API + React frontend)
 
-/**
- * Custom command to create a user via API
- * @example cy.createUser({ email: 'test@example.com', password: 'pass123', role: 'researcher' })
- */
-Cypress.Commands.add('createUser', (userData) => {
+const api = (path) => `${Cypress.env('apiUrl')}/api/v1${path}`;
+const authHeaders = (token) => ({ Authorization: `Bearer ${token}`, Accept: 'application/json' });
+
+Cypress.Commands.add('uniqueEmail', (prefix = 'user') => {
+  return cy.wrap(`${prefix}.${Date.now()}${Math.floor(Math.random() * 1000)}@example.com`, { log: false });
+});
+
+Cypress.Commands.add('apiRegister', (email, password) => {
   return cy.request({
     method: 'POST',
-    url: `${Cypress.env('apiUrl')}/api/v1/users`,
-    body: {
-      user: userData
-    },
+    url: api('/users'),
+    headers: { Accept: 'application/json' },
+    body: { user: { email, password } },
     failOnStatusCode: false
   });
 });
 
-/**
- * Custom command to create a scale via API
- * @example cy.createScale({ title: 'Test Scale', description: 'Description', user_id: 1 })
- */
-Cypress.Commands.add('createScale', (scaleData) => {
+Cypress.Commands.add('apiLogin', (email, password) => {
   return cy.request({
     method: 'POST',
-    url: `${Cypress.env('apiUrl')}/api/v1/scales`,
-    body: {
-      scale: scaleData
-    },
+    url: api('/session'),
+    headers: { Accept: 'application/json' },
+    body: { email, password },
     failOnStatusCode: false
   });
 });
 
-/**
- * Custom command to create a survey via API
- * @example cy.createSurvey({ title: 'Test Survey', scale_id: 1, user_id: 1 })
- */
-Cypress.Commands.add('createSurvey', (surveyData) => {
+// Registers a fresh user and logs in; yields { email, password, token, user }
+Cypress.Commands.add('apiCreateUser', () => {
+  const password = 'Password123!';
+  return cy.uniqueEmail().then((email) => {
+    cy.apiRegister(email, password).its('status').should('eq', 201);
+    return cy.apiLogin(email, password).then((res) => ({
+      email,
+      password,
+      token: res.body.token,
+      user: res.body.user
+    }));
+  });
+});
+
+Cypress.Commands.add('apiAuthed', (token, method, path, body) => {
   return cy.request({
-    method: 'POST',
-    url: `${Cypress.env('apiUrl')}/api/v1/surveys`,
-    body: {
-      survey: surveyData
-    },
+    method,
+    url: api(path),
+    headers: authHeaders(token),
+    body,
     failOnStatusCode: false
   });
 });
 
-/**
- * Custom command to submit a response via API
- * @example cy.submitResponse({ survey_id: 1, participant_name: 'John', answers: '{}' })
- */
-Cypress.Commands.add('submitResponse', (responseData) => {
+// Creates a scale owned by the token's user with the given [{text, min_value, max_value}] questions
+Cypress.Commands.add('apiCreateScale', (token, title, questions = []) => {
+  return cy.apiAuthed(token, 'POST', '/scales', { scale: { title, description: 'Created by Cypress', version: '1.0' } })
+    .then((res) => {
+      expect(res.status).to.eq(201);
+      const scale = res.body;
+      questions.forEach((q, i) => {
+        cy.apiAuthed(token, 'POST', `/scales/${scale.id}/questions`, {
+          question: { text: q.text, position: i + 1, min_value: q.min_value, max_value: q.max_value }
+        }).its('status').should('eq', 201);
+      });
+      return scale;
+    });
+});
+
+Cypress.Commands.add('apiPublishScale', (token, scaleId) => {
+  return cy.apiAuthed(token, 'PATCH', `/scales/${scaleId}/publish`).its('status').should('eq', 200);
+});
+
+Cypress.Commands.add('apiCreateSurvey', (token, scaleId, title) => {
+  return cy.apiAuthed(token, 'POST', '/surveys', { survey: { scale_id: scaleId, title, status: 'active' } })
+    .then((res) => {
+      expect(res.status).to.eq(201);
+      return res.body.survey;
+    });
+});
+
+// Public endpoint: no bearer token
+Cypress.Commands.add('apiSubmitResponse', (surveyId, participantName, answers) => {
   return cy.request({
     method: 'POST',
-    url: `${Cypress.env('apiUrl')}/api/v1/responses`,
+    url: api('/responses'),
+    headers: { Accept: 'application/json' },
     body: {
       response: {
-        ...responseData,
-        submitted_at: new Date().toISOString()
+        survey_id: surveyId,
+        participant_name: participantName,
+        submitted_at: new Date().toISOString(),
+        answers_attributes: answers
       }
     },
     failOnStatusCode: false
   });
 });
 
-/**
- * Custom command to authenticate as a user
- * @example cy.authenticateAs('researcher')
- */
-Cypress.Commands.add('authenticateAs', (role) => {
-  // This is a mock implementation
-  // In a real scenario, you'd authenticate and store the token
-  const token = `${role}-token-${Date.now()}`;
-  cy.wrap(token).as('authToken');
-  cy.log(`Authenticated as: ${role}`);
-  return cy.wrap(token);
-});
-
-/**
- * Custom command to check API health
- * @example cy.checkApiHealth()
- */
-Cypress.Commands.add('checkApiHealth', () => {
-  return cy.request({
-    method: 'GET',
-    url: `${Cypress.env('apiUrl')}/api/v1/health`,
-    failOnStatusCode: false
-  }).then((response) => {
-    if (response.status === 404) {
-      cy.log('Health endpoint not found, assuming API is accessible');
-      return true;
-    }
-    return response.status === 200;
-  });
-});
-
-/**
- * Custom command to wait for API to be ready
- * @example cy.waitForApi()
- */
-Cypress.Commands.add('waitForApi', (maxRetries = 5) => {
-  const checkApi = (retries = 0) => {
-    if (retries >= maxRetries) {
-      cy.log('⚠️ API may not be running. Tests will attempt to proceed.');
-      return;
-    }
-
-    cy.request({
-      method: 'GET',
-      url: `${Cypress.env('apiUrl')}/api/v1/users`,
-      failOnStatusCode: false,
-      timeout: 5000
-    }).then((response) => {
-      if (response.status >= 200 && response.status < 500) {
-        cy.log('✓ API is ready');
-      } else {
-        cy.wait(1000);
-        checkApi(retries + 1);
-      }
-    });
-  };
-
-  checkApi();
+// Logs in through the React login form
+Cypress.Commands.add('uiLogin', (email, password) => {
+  cy.visit('/login');
+  cy.contains('label', 'Email').find('input').type(email);
+  cy.contains('label', 'Password').find('input').type(password);
+  cy.contains('button', 'Log in').click();
+  cy.url().should('include', '/dashboard');
 });

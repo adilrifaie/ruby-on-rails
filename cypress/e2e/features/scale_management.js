@@ -1,112 +1,54 @@
 import { Given, When, Then } from "@badeball/cypress-cucumber-preprocessor";
+import { state } from "../../support/state";
 
-let apiUrl;
-let response;
-let authToken;
-let initialCredits;
+const questionsFor = (count) =>
+  Array.from({ length: count }, (_, i) => ({ text: `Question ${i + 1}`, min_value: 0, max_value: 4 }));
 
-// Background steps
-Given('I am authenticated as a researcher', () => {
-  authToken = 'researcher-token-456';
-  cy.log('Authenticated as researcher');
-});
-
-// Scale Management - Scenario 1: Create new scale
-Given('I have sufficient credits in my account', () => {
-  // Mock checking credits
-  initialCredits = 100;
-  cy.log(`Initial credits: ${initialCredits}`);
-});
-
-When('I create a new scale with the following details:', (dataTable) => {
-  const scaleData = {
-    user_id: 1
-  };
-
-  dataTable.rawTable.forEach(([key, value]) => {
-    scaleData[key] = value;
-  });
-
-  cy.request({
-    method: 'POST',
-    url: `${apiUrl}/api/v1/scales`,
-    body: {
-      scale: scaleData
-    },
-    failOnStatusCode: false
-  }).then((res) => {
-    response = res;
+Given("I have a draft scale titled {string}", (title) => {
+  cy.apiCreateScale(state.user.token, title).then((scale) => {
+    state.scale = scale;
   });
 });
 
-Then('the scale should be created successfully', () => {
-  expect(response.status).to.be.oneOf([200, 201]);
-  expect(response.body).to.have.property('id');
-});
-
-Then('the scale status should be {string}', (status) => {
-  expect(response.body).to.have.property('status', status);
-});
-
-Then('my credit balance should be decreased', () => {
-  // In a real scenario, you'd fetch the user's current credits
-  cy.log('Credits should be decreased after scale creation');
-  expect(true).to.be.true; // Placeholder assertion
-});
-
-// Scale Management - Scenario 2: Retrieve all scales
-Given('there are {int} scales in the system', (count) => {
-  cy.log(`Assuming ${count} scales exist in the system`);
-});
-
-Given('{int} scales are published', (count) => {
-  cy.log(`Assuming ${count} scales are published`);
-});
-
-When('I request all scales from the API', () => {
-  cy.request({
-    method: 'GET',
-    url: `${apiUrl}/api/v1/scales`,
-    failOnStatusCode: false
-  }).then((res) => {
-    response = res;
+Given("I have a draft scale titled {string} with {int} question(s)", (title, count) => {
+  cy.apiCreateScale(state.user.token, title, questionsFor(count)).then((scale) => {
+    state.scale = scale;
   });
 });
 
-Then('I should receive a list of scales', () => {
-  expect(response.body).to.be.an('array');
+When("I open the new scale page", () => {
+  cy.visit("/scales/new");
 });
 
-Then('the list should contain at least {int} scales', (minCount) => {
-  expect(response.body.length).to.be.at.least(minCount);
+When("I create a scale titled {string}", (title) => {
+  cy.contains("label", "Title").find("input").type(title);
+  cy.contains("button", "Create scale").click();
 });
 
-// Scale Management - Scenario 3: Publish a scale
-Given('I have created a scale with ID {int}', (scaleId) => {
-  cy.wrap(scaleId).as('scaleId');
-  cy.log(`Scale with ID ${scaleId} exists`);
+When("I open my scale page", () => {
+  cy.visit(`/scales/${state.scale.id}`);
 });
 
-Given('the scale has status {string}', (status) => {
-  cy.log(`Scale has status: ${status}`);
+When("I add a question {string} with range {int} to {int}", (text, min, max) => {
+  cy.contains("label", "Text").find("input").type(text);
+  cy.contains("label", "Min value").find("input").clear().type(String(min));
+  cy.contains("label", "Max value").find("input").clear().type(String(max));
+  cy.contains("button", "Add question").click();
 });
 
-When('I publish the scale with ID {int}', (scaleId) => {
-  cy.request({
-    method: 'PATCH',
-    url: `${apiUrl}/api/v1/scales/${scaleId}/publish`,
-    failOnStatusCode: false
-  }).then((res) => {
-    response = res;
-  });
+When("I create a survey titled {string}", (title) => {
+  cy.contains("label", "New survey title").find("input").type(title);
+  cy.contains("button", "Create survey").click();
 });
 
-Then('the scale status should be updated to {string}', (status) => {
-  expect(response.body).to.have.property('status', status);
+Then("I should be on a scale page", () => {
+  cy.url().should("match", /\/scales\/\d+$/);
 });
 
-Then('the scale should be available to other users', () => {
-  // Verify scale is accessible
-  cy.log('Scale should now be publicly available');
-  expect(response.body.status).to.equal('published');
+Then("I should be on a survey page", () => {
+  cy.url().should("match", /\/surveys\/\d+$/);
+});
+
+Then("the public link should point to the take page", () => {
+  cy.get("input[readonly]").invoke("val").should("match", /\/take\/\d+$/);
 });

@@ -1,846 +1,2431 @@
 {
-    "info": {
-        "_postman_id": "a9e8c0f8-90a8-4e6f-8f9a-3c2e1b0a6d5a",
-        "name": "Healthcare Scale Platform",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "_postman_id": "a9e8c0f8-90a8-4e6f-8f9a-3c2e1b0a6d5a",
+    "name": "Healthcare Scale Platform",
+    "description": "End-to-end API tests for the rebuilt Rails API. Run top to bottom: folder 1 registers users and stores JWTs in {{token}} / {{otherToken}}; later folders reuse the ids saved by earlier requests. Headless: newman run postman_collection.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
     },
-    "auth": {
-        "type": "bearer",
-        "bearer": [
+    {
+      "key": "userPassword",
+      "value": "Password123!"
+    },
+    {
+      "key": "userEmail",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "otherToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register user (public)",
+          "event": [
             {
-                "key": "token",
-                "value": "{{jwt_token}}",
-                "type": "string"
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"userEmail\", \"newman.\" + Date.now() + \"@example.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Role forced to student, credits defaulted\", () => { pm.expect(u.role).to.eql(\"student\"); pm.expect(u.credits).to.eql(20); });",
+                  "pm.test(\"password_digest not exposed\", () => pm.expect(pm.response.text()).to.not.include(\"password_digest\"));",
+                  "pm.collectionVariables.set(\"userId\", u.id);"
+                ]
+              }
             }
-        ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Register ignores role/credits escalation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Still a student with default credits\", () => { pm.expect(u.role).to.eql(\"student\"); pm.expect(u.credits).to.eql(20); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"escalate.{{$timestamp}}@example.com\",\n    \"password\": \"{{userPassword}}\",\n    \"role\": \"admin\",\n    \"credits\": 9999\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login (returns JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Token returned\", () => pm.expect(b.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.collectionVariables.set(\"token\", b.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login with wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error message\", () => pm.expect(pm.response.json().error).to.eql(\"Invalid email or password\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"wrong-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Request without token is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Register second user (for ownership checks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const u = pm.response.json();",
+                  "pm.collectionVariables.set(\"otherEmail\", u.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"other.{{$timestamp}}@example.com\",\n    \"password\": \"{{userPassword}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Login second user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"otherToken\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{otherEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
     },
-    "item": [
+    {
+      "name": "2. Users",
+      "item": [
         {
-            "name": "Users",
-            "item": [
+          "name": "List users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No password_digest\", () => pm.expect(pm.response.text()).to.not.include(\"password_digest\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Get all users",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/users",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get a single user",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/users/:id",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users",
-                                ":id"
-                            ],
-                            "variable": [
-                                {
-                                    "key": "id",
-                                    "value": "1"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Create a user",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"user\": {\n        \"email\": \"test@example.com\",\n        \"password\": \"password\",\n        \"role\": \"researcher\",\n        \"credits\": 100\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/users",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users"
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          }
         },
         {
-            "name": "Scales",
-            "item": [
+          "name": "Get user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Matches id\", () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get(\"userId\"))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Get all scales",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/scales",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "scales"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Create a scale",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"scale\": {\n        \"user_id\": 1,\n        \"title\": \"My new scale\",\n        \"description\": \"This is a new scale for testing purposes\",\n        \"version\": \"1.0\",\n        \"status\": \"draft\"\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/scales",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "scales"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Publish a scale",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "PATCH",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/scales/:id/publish",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "scales",
-                                ":id",
-                                "publish"
-                            ],
-                            "variable": [
-                                {
-                                    "key": "id",
-                                    "value": "1"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          }
         },
         {
-            "name": "Surveys",
-            "item": [
-                {
-                    "name": "Get all surveys",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/surveys",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "surveys"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Create a survey",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"survey\": {\n        \"scale_id\": 1,\n        \"user_id\": 1,\n        \"title\": \"My new survey\",\n        \"status\": \"draft\"\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/surveys",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "surveys"
-                            ]
-                        }
-                    },
-                    "response": []
+          "name": "Update own profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"{{userEmail}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-            ]
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         },
         {
-            "name": "Responses",
-            "item": [
-                {
-                    "name": "Create a response",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"response\": {\n        \"survey_id\": 1,\n        \"participant_name\": \"John Doe\",\n        \"answers\": \"{\\\"q1\\\": \\\"a\\\", \\\"q2\\\": \\\"b\\\"}\",\n        \"submitted_at\": \"2025-10-28T12:00:00Z\"\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/responses",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "responses"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Export a response",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/responses/:id/export",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "responses",
-                                ":id",
-                                "export"
-                            ],
-                            "variable": [
-                                {
-                                    "key": "id",
-                                    "value": "1"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
+          "name": "Cannot update another user (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"hijack@example.com\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-            ]
-        },
-        {
-            "name": "Analyses",
-            "item": [
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Create an analysis",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"analysis\": {\n        \"survey_id\": 1,\n        \"user_id\": 1,\n        \"analysis_type\": \"descriptive\"\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/analyses",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "analyses"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get an analysis report",
-                    "event": [
-                        {
-                            "listen": "prerequest",
-                            "script": {
-                                "exec": [
-                                    "pm.environment.set(\"savedResponseBody\", `\n\n`);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        },
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});\n\npm.test(\"Response body matches saved body\", function () {\n    const expectedBody = pm.environment.get(\"savedResponseBody\");\n\n    if (!expectedBody || expectedBody.trim() === \"\") {\n        console.log(\"Skipping response body comparison: savedResponseBody is not set or is empty.\");\n        return;\n    }\n\n    try {\n        const actualBody = pm.response.json();\n        const expectedJson = JSON.parse(expectedBody);\n        pm.expect(actualBody).to.deep.equal(expectedJson);\n    } catch (e) {\n        pm.test(\"Failed to parse or compare JSON bodies\", function() {\n            throw e;\n        });\n    }\n});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/analyses/:id/report",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "analyses",
-                                ":id",
-                                "report"
-                            ],
-                            "variable": [
-                                {
-                                    "key": "id",
-                                    "value": "1"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
                 }
-            ]
-        },
-        {
-            "name": "Google AI Studio",
-            "item": [
-                {
-                    "name": "Text Generation - Healthcare Recommendation",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "// Test 1: Check if status code is 200",
-                                    "pm.test(\"Status code is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "// Test 2: Response has required structure",
-                                    "pm.test(\"Response has candidates array\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('candidates');",
-                                    "    pm.expect(jsonData.candidates).to.be.an('array');",
-                                    "});",
-                                    "",
-                                    "// Test 3: Check if text content exists",
-                                    "pm.test(\"Response contains generated text\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData.candidates[0].content.parts[0].text).to.exist;",
-                                    "    pm.expect(jsonData.candidates[0].content.parts[0].text.length).to.be.above(0);",
-                                    "});",
-                                    "",
-                                    "// Test 4: Validate response time",
-                                    "pm.test(\"Response time is less than 5000ms\", function () {",
-                                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
-                                    "});",
-                                    "",
-                                    "// Test 5: Check content safety ratings",
-                                    "pm.test(\"Content has safety ratings\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    if (jsonData.candidates[0].safetyRatings) {",
-                                    "        pm.expect(jsonData.candidates[0].safetyRatings).to.be.an('array');",
-                                    "    }",
-                                    "});",
-                                    "",
-                                    "// Display the AI response in console",
-                                    "var jsonData = pm.response.json();",
-                                    "console.log(\"AI Generated Text:\");",
-                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"As a healthcare IT consultant, provide 3 specific recommendations for improving patient data security in a hospital system. Include technical implementation details.\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.7,\n        \"maxOutputTokens\": 500,\n        \"topP\": 0.95\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
-                            "protocol": "https",
-                            "host": [
-                                "generativelanguage",
-                                "googleapis",
-                                "com"
-                            ],
-                            "path": [
-                                "v1beta",
-                                "models",
-                                "gemini-pro:generateContent"
-                            ],
-                            "query": [
-                                {
-                                    "key": "key",
-                                    "value": "{{google_ai_api_key}}"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Data Processing - Survey Response Analysis",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "// Test 1: Check if status code is 200",
-                                    "pm.test(\"Status code is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "// Test 2: Response contains analysis",
-                                    "pm.test(\"AI provided analysis\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text;",
-                                    "    pm.expect(aiResponse).to.include('patient');",
-                                    "});",
-                                    "",
-                                    "// Test 3: Response contains structured data",
-                                    "pm.test(\"Response contains key insights\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text.toLowerCase();",
-                                    "    // Check if AI identified patterns in the data",
-                                    "    var hasInsights = aiResponse.includes('satisfaction') || ",
-                                    "                      aiResponse.includes('score') || ",
-                                    "                      aiResponse.includes('trend');",
-                                    "    pm.expect(hasInsights).to.be.true;",
-                                    "});",
-                                    "",
-                                    "// Display analysis in console",
-                                    "var jsonData = pm.response.json();",
-                                    "console.log(\"AI Analysis Result:\");",
-                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"Analyze the following patient satisfaction survey responses and provide insights:\\n\\nResponses:\\n1. Patient A: 'The waiting time was too long, but the staff was very friendly.' - Score: 3/5\\n2. Patient B: 'Excellent care and quick service.' - Score: 5/5\\n3. Patient C: 'Doctors were knowledgeable but the facility needs updating.' - Score: 4/5\\n\\nProvide: 1) Main themes, 2) Average satisfaction level, 3) Priority improvement areas\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.4,\n        \"maxOutputTokens\": 400\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
-                            "protocol": "https",
-                            "host": [
-                                "generativelanguage",
-                                "googleapis",
-                                "com"
-                            ],
-                            "path": [
-                                "v1beta",
-                                "models",
-                                "gemini-pro:generateContent"
-                            ],
-                            "query": [
-                                {
-                                    "key": "key",
-                                    "value": "{{google_ai_api_key}}"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Test Automation - Generate Test Cases",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "// Test 1: Successful response",
-                                    "pm.test(\"Status code is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "// Test 2: AI generated test cases",
-                                    "pm.test(\"Response contains test cases\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    var aiResponse = jsonData.candidates[0].content.parts[0].text.toLowerCase();",
-                                    "    var hasTestCases = aiResponse.includes('test') || ",
-                                    "                       aiResponse.includes('scenario') ||",
-                                    "                       aiResponse.includes('case');",
-                                    "    pm.expect(hasTestCases).to.be.true;",
-                                    "});",
-                                    "",
-                                    "// Test 3: Extract and save test scenarios",
-                                    "pm.test(\"AI can generate structured test scenarios\", function () {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    var generatedText = jsonData.candidates[0].content.parts[0].text;",
-                                    "    ",
-                                    "    // Save to environment for potential use in other tests",
-                                    "    pm.environment.set(\"ai_generated_test_cases\", generatedText);",
-                                    "    ",
-                                    "    pm.expect(generatedText.length).to.be.above(100);",
-                                    "});",
-                                    "",
-                                    "// Display generated test cases",
-                                    "var jsonData = pm.response.json();",
-                                    "console.log(\"AI Generated Test Cases:\");",
-                                    "console.log(jsonData.candidates[0].content.parts[0].text);"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"contents\": [\n        {\n            \"parts\": [\n                {\n                    \"text\": \"Generate 5 test cases for a healthcare survey creation API endpoint that accepts: title (string), description (string), scale_id (integer), user_id (integer), and status (enum: draft/active/completed). Include positive, negative, and edge cases.\"\n                }\n            ]\n        }\n    ],\n    \"generationConfig\": {\n        \"temperature\": 0.6,\n        \"maxOutputTokens\": 600\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={{google_ai_api_key}}",
-                            "protocol": "https",
-                            "host": [
-                                "generativelanguage",
-                                "googleapis",
-                                "com"
-                            ],
-                            "path": [
-                                "v1beta",
-                                "models",
-                                "gemini-pro:generateContent"
-                            ],
-                            "query": [
-                                {
-                                    "key": "key",
-                                    "value": "{{google_ai_api_key}}"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                }
-            ]
+              ]
+            }
+          }
         }
-    ],
-    "variable": [
+      ]
+    },
+    {
+      "name": "3. Scales & Questions",
+      "item": [
         {
-            "key": "baseUrl",
-            "value": "http://localhost:3000"
+          "name": "Create scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json();",
+                  "pm.test(\"Not published yet\", () => pm.expect(s.status).to.not.eql(\"published\"));",
+                  "pm.collectionVariables.set(\"scaleId\", s.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scale\": {\n    \"title\": \"Newman Depression Scale\",\n    \"description\": \"Created by the Postman collection\",\n    \"version\": \"1.0\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         },
         {
-            "key": "google_ai_api_key",
-            "value": "YOUR_API_KEY_HERE"
+          "name": "Add question 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"question1Id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": {\n    \"text\": \"I felt sad\",\n    \"position\": 1,\n    \"min_value\": 0,\n    \"max_value\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "questions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add question 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"question2Id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": {\n    \"text\": \"I lost interest in things\",\n    \"position\": 2,\n    \"min_value\": 0,\n    \"max_value\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "questions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Question with invalid range is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": {\n    \"text\": \"Bad range\",\n    \"position\": 3,\n    \"min_value\": 5,\n    \"max_value\": 1\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "questions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non-owner cannot add a question (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": {\n    \"text\": \"Intruder\",\n    \"position\": 9,\n    \"min_value\": 0,\n    \"max_value\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "questions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get scale (embeds questions)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has 2 questions\", () => pm.expect(pm.response.json().questions).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Description updated\", () => pm.expect(pm.response.json().description).to.eql(\"Updated by Newman\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scale\": {\n    \"description\": \"Updated by Newman\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List scales (paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Is an array\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per",
+                  "value": "10"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non-owner cannot publish (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "publish"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Now published\", () => pm.expect(pm.response.json().status).to.eql(\"published\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}",
+                "publish"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
-    ]
+      ]
+    },
+    {
+      "name": "4. Surveys",
+      "item": [
+        {
+          "name": "Create survey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"surveyId\", pm.response.json().survey.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": {\n    \"scale_id\": \"{{scaleId}}\",\n    \"title\": \"Newman Survey\",\n    \"status\": \"active\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get survey (public, no token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Embeds scale questions\", () => pm.expect(pm.response.json().scale.questions).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys/{{surveyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys",
+                "{{surveyId}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "List surveys",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update survey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": {\n    \"title\": \"Newman Survey (renamed)\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys/{{surveyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys",
+                "{{surveyId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non-owner cannot update survey (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey\": {\n    \"title\": \"Nope\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys/{{surveyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys",
+                "{{surveyId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Responses",
+      "item": [
+        {
+          "name": "Submit response (public, no token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"Score is the sum of answers\", () => pm.expect(b.score).to.eql(5));",
+                  "pm.collectionVariables.set(\"responseId\", b.response.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"participant_name\": \"Jane Participant\",\n    \"submitted_at\": \"2026-01-01T10:00:00Z\",\n    \"answers_attributes\": [\n      {\n        \"question_id\": \"{{question1Id}}\",\n        \"value\": 3\n      },\n      {\n        \"question_id\": \"{{question2Id}}\",\n        \"value\": 2\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Submit second response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"participant_name\": \"John Participant\",\n    \"submitted_at\": \"2026-01-01T11:00:00Z\",\n    \"answers_attributes\": [\n      {\n        \"question_id\": \"{{question1Id}}\",\n        \"value\": 1\n      },\n      {\n        \"question_id\": \"{{question2Id}}\",\n        \"value\": 4\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Out-of-range answer is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"participant_name\": \"Bad Input\",\n    \"submitted_at\": \"2026-01-01T12:00:00Z\",\n    \"answers_attributes\": [\n      {\n        \"question_id\": \"{{question1Id}}\",\n        \"value\": 99\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "List responses for survey (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Two responses\", () => pm.expect(pm.response.json()).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses"
+              ],
+              "query": [
+                {
+                  "key": "survey_id",
+                  "value": "{{surveyId}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get response (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Score present\", () => pm.expect(pm.response.json().score).to.eql(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses/{{responseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses",
+                "{{responseId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export response (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses/{{responseId}}/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses",
+                "{{responseId}}",
+                "export"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non-owner cannot view response (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses/{{responseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses",
+                "{{responseId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Response requires auth to read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/responses/{{responseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "responses",
+                "{{responseId}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Analyses",
+      "item": [
+        {
+          "name": "Run descriptive analysis (5 credits)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "const a = pm.response.json();",
+                  "pm.test(\"Cost is 5 credits\", () => pm.expect(a.credits_used).to.eql(5));",
+                  "pm.test(\"Results are structured\", () => { pm.expect(a.results.n).to.eql(2); pm.expect(a.results.mean).to.eql(5); });",
+                  "pm.collectionVariables.set(\"analysisId\", a.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"analysis_type\": \"descriptive\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get analysis report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Report summarises the survey\", () => { pm.expect(r.analysis_type).to.eql(\"descriptive\"); pm.expect(r.total_responses).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses/{{analysisId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses",
+                "{{analysisId}}",
+                "report"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Run correlation analysis (10 credits)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Cost is 10 credits\", () => pm.expect(pm.response.json().credits_used).to.eql(10));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"analysis_type\": \"correlation\",\n    \"question_a_id\": \"{{question1Id}}\",\n    \"question_b_id\": \"{{question2Id}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Correlation without questions is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"analysis_type\": \"correlation\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Insufficient credits is rejected (factor, 15 credits)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Explains the credit shortfall\", () => pm.expect(JSON.stringify(pm.response.json())).to.include(\"insufficient\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysis\": {\n    \"survey_id\": \"{{surveyId}}\",\n    \"analysis_type\": \"factor\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List analyses (own only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Two analyses run\", () => pm.expect(pm.response.json()).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get analysis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses/{{analysisId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses",
+                "{{analysisId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non-owner cannot read report (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analyses/{{analysisId}}/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analyses",
+                "{{analysisId}}",
+                "report"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Cleanup & destroy guards",
+      "item": [
+        {
+          "name": "Cannot delete survey that has responses (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/surveys/{{surveyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "surveys",
+                "{{surveyId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cannot delete scale that has surveys (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{scaleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{scaleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create throwaway scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"throwawayScaleId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scale\": {\n    \"title\": \"Throwaway\",\n    \"description\": \"x\",\n    \"version\": \"1.0\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete throwaway scale (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scales/{{throwawayScaleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scales",
+                "{{throwawayScaleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
 }
-
