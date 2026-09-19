@@ -36,6 +36,8 @@ const answerCurrentQuestion = (value) => {
 When("I enter my name {string}", (name) => {
   cy.field("Your name").type(name);
   cy.contains("button", "Start").click();
+  // Wait for the first question, or the next step can still click the intro form's Start button.
+  cy.contains("Question 1 of").should("be.visible");
 });
 
 When("I answer the questions with {string}", (values) => {

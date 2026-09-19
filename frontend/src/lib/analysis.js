@@ -40,3 +40,17 @@ export function summarizeResults(analysis) {
       return "";
   }
 }
+
+// Plain-language strength of a Pearson correlation coefficient.
+export function correlationStrength(r) {
+  if (r == null) return null;
+  const size = Math.abs(r);
+  const strength = size < 0.1 ? "Negligible" : size < 0.3 ? "Weak" : size < 0.5 ? "Moderate" : "Strong";
+  if (strength === "Negligible") return { label: "Negligible", sentence: "The answers barely move together." };
+  const direction = r > 0 ? "positive" : "negative";
+  const sentence =
+    r > 0
+      ? "People who scored higher on one question tended to score higher on the other."
+      : "People who scored higher on one question tended to score lower on the other.";
+  return { label: `${strength} ${direction}`, sentence };
+}

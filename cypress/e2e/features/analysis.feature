@@ -20,6 +20,16 @@ Feature: Statistical Analysis
   Scenario: Run a correlation analysis between two questions
     When I run a correlation analysis between the first and second question
     Then I should see "10 credits"
+    When I click "correlation"
+    Then I should see "Strong negative"
+    And I should see "Question 2"
+
+  Scenario: A factor summary report lists every question
+    When I run a "factor" analysis
+    And I click "factor"
+    Then I should see "not a statistical factor analysis"
+    And I should see "Question 1"
+    And I should see "Show raw data"
 
   Scenario: The analyses tab can be opened from a link
     When I open the survey's analyses tab from its link

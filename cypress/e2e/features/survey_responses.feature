@@ -49,6 +49,8 @@ Feature: Survey Responses
     When I click "Jane Participant"
     Then I should see "Score:"
     And I should see "8"
+    And I should see "out of 8"
+    And I should see "Question 2"
 
   Scenario: Another user can't open the researcher's survey page
     Given another registered user exists
