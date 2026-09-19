@@ -1,323 +1,182 @@
 # Healthcare Scale Platform
 
-A comprehensive Ruby on Rails API application for managing healthcare assessment scales, surveys, responses, and statistical analyses. This platform enables researchers, administrators, and students to create, distribute, and analyze healthcare assessment scales with a credit-based system.
+A full-stack platform for building and running healthcare assessment scales. Researchers design a scale (questions + scoring bands), publish it, collect responses through a public survey link, and run credit-gated statistical analyses on the results.
 
-## 🎯 Overview
+The scale is data, not code. Beck Depression, PHQ-9, GAD-7 or any other instrument is expressed as a `Scale` record with questions and scoring bands, so no instrument-specific logic is hardcoded.
 
-The Healthcare Scale Platform is designed to facilitate the creation and management of healthcare assessment tools. Users can:
-- Create and publish standardized assessment scales
-- Design and distribute surveys based on these scales
-- Collect and export participant responses
-- Perform various types of statistical analyses
-- Manage user credits for premium analysis features
+- **Backend:** Rails 8 API-only, PostgreSQL, JWT auth, Pundit authorization, Jbuilder views
+- **Frontend:** React 19 + Vite + React Router (`frontend/`)
+- **Testing:** Minitest request tests, Cypress + Cucumber (BDD) E2E, Postman/Newman
+- **Architecture notes:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
-## 🏗️ Architecture
+> Started as a YZM301 (Software Implementation and Testing) course project, then rebuilt well beyond the course scope: real auth, a structured question/answer model, a real analysis engine, a complete REST API and a React client.
 
-This is a **Rails 8.0 API-only application** with the following key components:
+## Features
 
-### Models
-- **User**: Manages authentication, roles (admin/researcher/student), and credit system
-- **Scale**: Represents standardized assessment scales with unique identifiers
-- **Survey**: Links scales to data collection instances
-- **Response**: Stores participant answers and calculates scores
-- **Analysis**: Performs statistical analyses with credit deduction
+- Register and log in (JWT bearer tokens)
+- Scale builder: create a scale, add and edit questions, publish it
+- Scoring bands per scale (e.g. `Low 0-4`, `Moderate 5-9`) resolved into a severity label for each response
+- Public survey-taking page, no account needed for participants
+- Owner-only response list, score view and export
+- Analyses (descriptive, correlation, factor summary) that cost credits and return `422` when the balance is too low
 
-### API Endpoints (v1)
+## Quick Start
 
-#### Users
-- `GET /api/v1/users` - List all users
-- `GET /api/v1/users/:id` - Get user details
-- `POST /api/v1/users` - Create a new user
+### Prerequisites
 
-#### Scales
-- `GET /api/v1/scales` - List all scales
-- `POST /api/v1/scales` - Create a new scale
-- `PATCH /api/v1/scales/:id/publish` - Publish a scale
+- Ruby 3.4 and Bundler
+- PostgreSQL
+- Node.js (frontend and Cypress)
 
-#### Surveys
-- `GET /api/v1/surveys` - List all surveys
-- `POST /api/v1/surveys` - Create a new survey
-
-#### Responses
-- `POST /api/v1/responses` - Submit a response
-- `GET /api/v1/responses/:id/export` - Export response data
-
-#### Analyses
-- `POST /api/v1/analyses` - Create and run an analysis
-- `GET /api/v1/analyses/:id/report` - Generate analysis report
-
-## 🛠️ Technology Stack
-
-- **Ruby Version**: 3.x+ (recommended)
-- **Rails Version**: 8.0.3
-- **Database**: SQLite3 (development/test), PostgreSQL ready for production
-- **Web Server**: Puma
-- **Authentication**: BCrypt (has_secure_password)
-- **Background Jobs**: Solid Queue
-- **Caching**: Solid Cache
-- **WebSockets**: Solid Cable
-- **Deployment**: Kamal (Docker-based)
-
-## 📋 Prerequisites
-
-- Ruby 3.0 or higher
-- Bundler gem
-- SQLite3 (for development)
-- Git
-
-## 🚀 Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd healthcare_scale_platform
-```
-
-### 2. Install Dependencies
+### 1. Backend (Rails API, port 3000)
 
 ```bash
 bundle install
+cp .env.example .env        # fill in DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD
+bin/rails db:setup          # create, load schema, seed
+bin/rails server
 ```
 
-### 3. Database Setup
+`.env` is gitignored and loaded automatically in development and test.
 
-Create and migrate the database:
+The seed creates two users, both with password `password123`:
+
+| Email | Role | Credits |
+|---|---|---|
+| `researcher@example.com` | researcher | 100 |
+| `student@example.com` | student | 50 |
+
+### 2. Frontend (React, port 5173)
 
 ```bash
-rails db:create
-rails db:migrate
+cd frontend
+npm install
+npm run dev
 ```
 
-Optionally, seed the database with sample data:
+Open `http://localhost:5173`. CORS on the API is configured for that origin (`config/initializers/cors.rb`).
+
+## Using the App
+
+1. Register or log in.
+2. **Dashboard:** your scales and credit balance.
+3. **Scale builder:** create a scale, add questions, publish.
+4. Create a survey from a published scale and share its `/take/:id` link.
+5. A participant submits answers on the public page.
+6. As the owner, open the response for its score and severity band.
+7. Run an analysis on the survey and open its report.
+
+## API (v1)
+
+Everything except login, registration, `GET /surveys/:id` and response submission (the public survey flow) requires `Authorization: Bearer <token>`.
+
+| Resource | Endpoints |
+|---|---|
+| Session | `POST /api/v1/session` (login, returns a JWT) |
+| Users | `GET /users`, `GET /users/:id`, `POST /users` (register), `PATCH /users/:id` (own profile only) |
+| Scales | `GET /scales`, `GET /scales/:id` (embeds questions), `POST`, `PATCH`, `DELETE`, `PATCH /scales/:id/publish` |
+| Questions | `POST /scales/:scale_id/questions`, `PATCH` and `DELETE /scales/:scale_id/questions/:id` |
+| Surveys | `GET /surveys`, `GET /surveys/:id`, `POST`, `PATCH`, `DELETE` |
+| Responses | `POST /responses` (public), `GET /responses`, `GET /responses/:id`, `GET /responses/:id/export` |
+| Analyses | `GET /analyses`, `GET /analyses/:id`, `POST /analyses`, `GET /analyses/:id/report` |
+
+- `index` actions take `page` and `per` params.
+- `DELETE` returns `422` instead of cascading when a scale still has surveys or a survey still has responses.
+- Responses cannot be updated or deleted once submitted.
+- Request bodies are wrapped by resource. Sample payloads are in the `documentation/` folder (`login.json`, `scale.json`, ...).
+
+### Example
 
 ```bash
-rails db:seed
+# 1. Log in
+curl -X POST http://localhost:3000/api/v1/session \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"email":"researcher@example.com","password":"password123"}'
+
+# 2. Submit a response (nested answers, validated against each question's range)
+curl -X POST http://localhost:3000/api/v1/responses \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"response":{"survey_id":1,"participant_name":"Tester","answers_attributes":[{"question_id":1,"value":3},{"question_id":2,"value":4}]}}'
+
+# 3. Run an analysis (token from step 1)
+curl -X POST http://localhost:3000/api/v1/analyses \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"analysis":{"survey_id":1,"analysis_type":"descriptive"}}'
 ```
 
-### 4. Configuration
+## Data Model
 
-The application uses Rails credentials for sensitive data. The master key should be located at:
-- `config/master.key`
+```
+User ──< Scale ──< Question
+ │         │           │
+ │         └──< Survey │
+ │               │     │
+ └──< Survey ──< Response ──< Answer >── Question
+ └──< Analysis >── Survey
+```
 
-If you need to edit credentials:
+| Model | Notes |
+|---|---|
+| `User` | `role` (admin/researcher/student), `credits`, `has_secure_password` |
+| `Scale` | `status`, `identifier`, `scoring_bands` (jsonb) |
+| `Question` | `text`, `position` (unique per scale), `min_value`, `max_value` |
+| `Survey` | A distribution of a scale, owns its responses |
+| `Response` | One participant's submission; `calculate_score` and `severity_band` |
+| `Answer` | `value` within the question's range, one per response and question |
+| `Analysis` | `analysis_type`, `credits_used`, `results` (jsonb), optional `question_a_id` / `question_b_id` |
+
+## Credit-Gated Analyses
+
+| Type | Cost | Output |
+|---|---|---|
+| `descriptive` | 5 | mean, median, standard deviation, min, max, n of response scores |
+| `correlation` | 10 | Pearson correlation between two questions (needs `question_a_id` and `question_b_id`) |
+| `factor` | 15 | Per-question average, min and max. A lightweight summary, not a real factor analysis, and its output says so. |
+
+## Testing
 
 ```bash
-rails credentials:edit
+bin/rails test                      # Minitest: request tests for every controller action
+bin/rubocop                         # style
+bin/brakeman                        # static security scan
 ```
 
-### 5. Start the Server
+E2E (Cypress + Cucumber) runs against the real app, so start the Rails server and the frontend first:
 
 ```bash
-rails server
+npm install                         # repo root
+npm run cy:open                     # interactive
+npm run cy:run                      # headless
 ```
 
-Or use the development script:
+The Postman collection (`postman_collection.json`) opens with an Auth folder (register, login) and carries the bearer token through the rest. Run it headless with Newman:
 
 ```bash
-bin/dev
+newman run postman_collection.json -r html
 ```
 
-The API will be available at `http://localhost:3000`
+CI (`.github/workflows/ci.yml`) runs Brakeman, RuboCop and the Minitest suite.
 
-## 🧪 Running Tests
-
-Execute the test suite with:
-
-```bash
-rails test
-```
-
-Run specific tests:
-
-```bash
-rails test test/models/user_test.rb
-rails test test/controllers/api/v1/users_controller_test.rb
-```
-
-## 📊 Database Schema
-
-### Users Table
-- `email` (string, unique)
-- `password_digest` (string)
-- `role` (string: admin/researcher/student)
-- `credits` (integer)
-
-### Scales Table
-- `user_id` (foreign key)
-- `title` (string)
-- `description` (text)
-- `identifier` (string, unique, auto-generated)
-- `version` (string)
-- `status` (string)
-
-### Surveys Table
-- `scale_id` (foreign key)
-- `user_id` (foreign key)
-- `title` (string)
-- `status` (string)
-- `response_count` (integer)
-
-### Responses Table
-- `survey_id` (foreign key)
-- `participant_name` (string)
-- `answers` (text)
-- `submitted_at` (datetime)
-
-### Analyses Table
-- `survey_id` (foreign key)
-- `user_id` (foreign key)
-- `analysis_type` (string)
-- `results` (text)
-- `credits_used` (integer)
-
-## 💳 Credit System
-
-The platform uses a credit-based system for analyses:
-
-| Analysis Type | Credits Required |
-|--------------|------------------|
-| Descriptive  | 5 credits       |
-| Correlation  | 10 credits      |
-| Factor       | 15 credits      |
-
-Users must have sufficient credits before performing analyses.
-
-## 🔒 Security Features
-
-- Password encryption using BCrypt
-- Role-based access control (admin, researcher, student)
-- Parameter filtering for sensitive data
-- CORS configuration available in `config/initializers/cors.rb`
-- Static security analysis with Brakeman
-
-## 🐳 Docker Deployment
-
-The application includes Docker support with Kamal for deployment:
-
-```bash
-kamal setup
-kamal deploy
-```
-
-See `config/deploy.yml` for deployment configuration.
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 app/
-├── controllers/api/v1/    # API versioned controllers
-├── models/                # ActiveRecord models
-├── jobs/                  # Background jobs
-└── mailers/              # Email mailers
-
-config/
-├── environments/         # Environment-specific configs
-├── initializers/        # App initialization code
-└── routes.rb           # API routes definition
-
-db/
-├── migrate/            # Database migrations
-└── schema.rb          # Current database schema
-
-test/
-├── controllers/       # Controller tests
-├── models/           # Model tests
-└── fixtures/        # Test data
+├── controllers/api/v1/   # versioned API controllers
+├── models/               # ActiveRecord models
+├── policies/             # Pundit authorization
+├── services/analyses/    # descriptive, correlation, factor
+├── views/api/v1/         # Jbuilder serializers
+└── lib/json_web_token.rb
+frontend/                 # React + Vite client
+cypress/                  # Cucumber features + step definitions
+test/                     # Minitest request tests and fixtures
 ```
 
-## 🔧 Development Tools
+## Deployment
 
-- **Brakeman**: Security vulnerability scanning
-- **RuboCop**: Code style checking (Rails Omakase style guide)
-- **Debug**: Interactive debugging
-- **Bootsnap**: Boot time optimization
+Kamal (`config/deploy.yml`) and a `Dockerfile` are included from the original scaffold but the deployment has not been set up or tested for this rebuild.
 
-Run code analysis:
+## License
 
-```bash
-bin/brakeman
-bin/rubocop
-```
-
-## 📝 API Usage Examples
-
-### Create a User
-
-```bash
-POST /api/v1/users
-Content-Type: application/json
-
-{
-  "email": "researcher@example.com",
-  "password": "secure_password",
-  "role": "researcher",
-  "credits": 100
-}
-```
-
-### Create a Scale
-
-```bash
-POST /api/v1/scales
-Content-Type: application/json
-
-{
-  "title": "Depression Assessment Scale",
-  "description": "A standardized tool for assessing depression",
-  "version": "1.0"
-}
-```
-
-### Submit a Response
-
-```bash
-POST /api/v1/responses
-Content-Type: application/json
-
-{
-  "survey_id": 1,
-  "participant_name": "John Doe",
-  "answers": "1,3,2,4,3,2,1",
-  "submitted_at": "2025-10-21T10:30:00Z"
-}
-```
-
-### Run an Analysis
-
-```bash
-POST /api/v1/analyses
-Content-Type: application/json
-
-{
-  "survey_id": 1,
-  "analysis_type": "descriptive"
-}
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is part of a software implementation and testing course.
-
-## 👥 Support
-
-For questions or issues, please open an issue in the repository or contact the development team.
-
-## 🔄 Changelog
-
-### Version 1.0.0 (October 2025)
-- Initial release
-- User authentication and role management
-- Scale creation and publishing
-- Survey management
-- Response collection and export
-- Statistical analysis with credit system
-- RESTful API with versioning (v1)
+Part of a software implementation and testing course project.
