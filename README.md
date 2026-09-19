@@ -9,7 +9,6 @@ The scale is data, not code. Beck Depression, PHQ-9, GAD-7 or any other instrume
 - **Testing:** Minitest request tests, Cypress + Cucumber (BDD) E2E, Postman/Newman
 - **Architecture notes:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
-> Started as a YZM301 (Software Implementation and Testing) course project, then rebuilt well beyond the course scope: real auth, a structured question/answer model, a real analysis engine, a complete REST API and a React client.
 
 ## Screenshots
 
