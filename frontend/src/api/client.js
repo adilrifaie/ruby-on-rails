@@ -51,7 +51,7 @@ export const api = {
 
   createQuestion: (scaleId, params) => request(`/scales/${scaleId}/questions`, { method: "POST", body: { question: params } }),
   updateQuestion: (id, params) => request(`/questions/${id}`, { method: "PATCH", body: { question: params } }),
-  destroyQuestion: (id) => request(`/questions/${id}`, { method: "DELETE" }),
+  destroyQuestion: (scaleId, id) => request(`/scales/${scaleId}/questions/${id}`, { method: "DELETE" }),
 
   listSurveys: (page = 1) => request(`/surveys?page=${page}`),
   getSurvey: (id, { auth = true } = {}) => request(`/surveys/${id}`, { auth }),

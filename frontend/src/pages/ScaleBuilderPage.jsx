@@ -66,7 +66,7 @@ export default function ScaleBuilderPage() {
   const handleDeleteQuestion = async (questionId) => {
     setError(null);
     try {
-      await api.destroyQuestion(questionId);
+      await api.destroyQuestion(id, questionId);
       setQuestions(questions.filter((q) => q.id !== questionId));
     } catch (err) {
       setError(err.message);
@@ -117,7 +117,7 @@ export default function ScaleBuilderPage() {
         <button type="submit">{isNew ? "Create scale" : "Save changes"}</button>
       </form>
 
-      {!isNew && (
+      {!isNew && scale && (
         <>
           <section>
             <div className="section-header">
