@@ -27,14 +27,35 @@ When("I open the public survey link", () => {
   cy.visit(`/take/${state.survey.id}`);
 });
 
+// The public survey shows one question per screen: pick an answer, then continue.
+const answerCurrentQuestion = (value) => {
+  cy.get(`label[data-answer="${value}"]`).click();
+  cy.get('form button[type="submit"]').click();
+};
+
 When("I enter my name {string}", (name) => {
   cy.field("Your name").type(name);
+  cy.contains("button", "Start").click();
 });
 
 When("I answer the questions with {string}", (values) => {
-  values.split(",").forEach((value, i) => {
-    cy.get(".question-block input").eq(i).type(value);
-  });
+  values.split(",").forEach((value) => answerCurrentQuestion(value));
+});
+
+When("I answer the current question with {string}", (value) => {
+  answerCurrentQuestion(value);
+});
+
+When("I continue without choosing an answer", () => {
+  cy.get('form button[type="submit"]').click();
+});
+
+When("I change my answer to question {int}", (number) => {
+  cy.get(`button[aria-label="Change your answer to question ${number}"]`).click();
+});
+
+When("I reload the page", () => {
+  cy.reload();
 });
 
 When("I log in as the researcher through the UI", () => {

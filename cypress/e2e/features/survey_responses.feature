@@ -15,6 +15,32 @@ Feature: Survey Responses
     And I should see "Your score:"
     And I should see "5"
 
+  Scenario: A participant has to answer before moving on
+    When I open the public survey link
+    And I enter my name "Jane Participant"
+    And I continue without choosing an answer
+    Then I should see "Choose an answer to continue."
+    And I should see "Question 1 of 2"
+
+  Scenario: A participant changes an answer on the review screen
+    When I open the public survey link
+    And I enter my name "Jane Participant"
+    And I answer the questions with "3,2"
+    Then I should see "Check your answers"
+    When I change my answer to question 1
+    And I answer the current question with "1"
+    Then I should see "Check your answers"
+    When I click "Submit"
+    Then I should see "Your score:"
+    And I should see "3"
+
+  Scenario: Progress survives a page reload
+    When I open the public survey link
+    And I enter my name "Jane Participant"
+    And I answer the current question with "4"
+    And I reload the page
+    Then I should see "Question 2 of 2"
+
   Scenario: Researcher reviews a submitted response
     Given a participant has submitted a response with answers "4,4"
     When I log in as the researcher through the UI
