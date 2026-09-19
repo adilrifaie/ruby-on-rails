@@ -21,6 +21,10 @@ Feature: Statistical Analysis
     When I run a correlation analysis between the first and second question
     Then I should see "10 credits"
 
+  Scenario: The analyses tab can be opened from a link
+    When I open the survey's analyses tab from its link
+    Then I should see "Run an analysis"
+
   Scenario: Running out of credits is rejected
     When I run a "factor" analysis
     And I run a "factor" analysis

@@ -45,6 +45,11 @@ When("I open the survey page", () => {
   cy.visit(`/surveys/${state.survey.id}`);
 });
 
+When("the other user opens the survey page", () => {
+  cy.uiLogin(state.otherUser.email, state.otherUser.password);
+  cy.visit(`/surveys/${state.survey.id}`);
+});
+
 When("a participant submits an out-of-range answer", () => {
   cy.apiSubmitResponse(state.survey.id, "Out Of Range", [{ question_id: state.questions[0].id, value: 99 }]).then((res) => {
     state.apiResponse = res;

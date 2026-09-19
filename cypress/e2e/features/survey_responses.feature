@@ -24,6 +24,11 @@ Feature: Survey Responses
     Then I should see "Score:"
     And I should see "8"
 
+  Scenario: Another user can't open the researcher's survey page
+    Given another registered user exists
+    When the other user opens the survey page
+    Then I should see "belongs to another account"
+
   Scenario: An out-of-range answer is rejected by the API
     When a participant submits an out-of-range answer
     Then the API responds with status 422
