@@ -27,7 +27,7 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" aria-label="Account menu">
+        <Button type="button" variant="ghost" size="icon" aria-label={`Account menu for ${user.email}`}>
           <Avatar className="size-8">
             <AvatarFallback className="uppercase">
               {user.email.slice(0, 2)}

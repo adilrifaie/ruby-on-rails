@@ -5,20 +5,31 @@ A full-stack platform for building and running healthcare assessment scales. Res
 The scale is data, not code. Beck Depression, PHQ-9, GAD-7 or any other instrument is expressed as a `Scale` record with questions and scoring bands, so no instrument-specific logic is hardcoded.
 
 - **Backend:** Rails 8 API-only, PostgreSQL, JWT auth, Pundit authorization, Jbuilder views
-- **Frontend:** React 19 + Vite + React Router (`frontend/`)
+- **Frontend:** React 19 + Vite + React Router, Tailwind CSS v4 + shadcn/ui, Recharts (`frontend/`)
 - **Testing:** Minitest request tests, Cypress + Cucumber (BDD) E2E, Postman/Newman
 - **Architecture notes:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
 > Started as a YZM301 (Software Implementation and Testing) course project, then rebuilt well beyond the course scope: real auth, a structured question/answer model, a real analysis engine, a complete REST API and a React client.
 
+## Screenshots
+
+| Dashboard | Survey: share link and responses |
+|---|---|
+| ![Dashboard with credit balance, scales and surveys](docs/screenshots/dashboard.png) | ![Survey page with public link, stats and responses](docs/screenshots/survey.png) |
+| **Scale builder** | **Factor summary report** |
+| ![Scale builder with step progress and details form](docs/screenshots/scale-builder.png) | ![Per-question averages chart](docs/screenshots/report.png) |
+| **Response (dark mode)** | **Participant view (mobile)** |
+| ![Response with score, scoring band and answers in dark mode](docs/screenshots/response-dark.png) | <img src="docs/screenshots/participant-mobile.png" alt="One question per screen on a phone" width="260"> |
+
 ## Features
 
 - Register and log in (JWT bearer tokens)
-- Scale builder: create a scale, add and edit questions, publish it
-- Scoring bands per scale (e.g. `Low 0-4`, `Moderate 5-9`) resolved into a severity label for each response
-- Public survey-taking page, no account needed for participants
-- Owner-only response list, score view and export
-- Analyses (descriptive, correlation, factor summary) that cost credits and return `422` when the balance is too low
+- Scale builder: create a scale, add and edit questions, set scoring bands, publish it. Publishing locks questions and bands.
+- Scoring bands per scale (e.g. `Minimal 0-4`, `Mild 5-9`) resolved into a severity label for each response
+- Public survey link, no account needed: one question per screen, a "check your answers" step, progress kept across a refresh
+- Owner-only responses table and response view (score out of the maximum, band, every answer)
+- Analyses (descriptive, correlation, factor summary) that cost credits and return `422` when the balance is too low, with readable reports and a chart
+- Light and dark theme, keyboard accessible, Lighthouse accessibility score of 100 on the main pages (light and dark, mobile and desktop)
 
 ## Quick Start
 
@@ -50,21 +61,22 @@ The seed creates two users, both with password `password123`:
 
 ```bash
 cd frontend
+cp .env.example .env        # VITE_API_BASE_URL=http://localhost:3000/api/v1
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. CORS on the API is configured for that origin (`config/initializers/cors.rb`).
+Open `http://localhost:5173`. More on the frontend in [`frontend/README.md`](frontend/README.md). CORS on the API is configured for that origin (`config/initializers/cors.rb`).
 
 ## Using the App
 
 1. Register or log in.
-2. **Dashboard:** your scales and credit balance.
-3. **Scale builder:** create a scale, add questions, publish.
-4. Create a survey from a published scale and share its `/take/:id` link.
-5. A participant submits answers on the public page.
-6. As the owner, open the response for its score and severity band.
-7. Run an analysis on the survey and open its report.
+2. **Dashboard:** your credit balance, scales, surveys and recent analyses.
+3. **Scale builder:** create a scale, add questions and scoring bands, publish.
+4. Create a survey from the published scale and share its `/take/:id` link.
+5. A participant answers one question per screen, reviews the answers and submits.
+6. As the owner, open the survey's responses and click one for its score and severity band.
+7. On the survey's Analyses tab, run an analysis and open its report.
 
 ## API (v1)
 
@@ -144,7 +156,7 @@ bin/rubocop                         # style
 bin/brakeman                        # static security scan
 ```
 
-E2E (Cypress + Cucumber) runs against the real app, so start the Rails server and the frontend first:
+E2E (Cypress + Cucumber) runs against the real app, so start the Rails server and the frontend first. Start Vite with `npm run dev -- --host` so it also listens on `127.0.0.1`, which Cypress uses:
 
 ```bash
 npm install                         # repo root
@@ -170,7 +182,13 @@ app/
 ├── services/analyses/    # descriptive, correlation, factor
 ├── views/api/v1/         # Jbuilder serializers
 └── lib/json_web_token.rb
-frontend/                 # React + Vite client
+frontend/src/
+├── pages/                # one component per route, lazy-loaded
+├── components/           # app components (ui/ holds the shadcn/ui primitives)
+├── api/client.js         # fetch wrapper, JWT header, readable error messages
+├── auth/                 # AuthContext, RequireAuth
+└── lib/                  # formatting, severity colors, analysis helpers
+docs/screenshots/         # README images
 cypress/                  # Cucumber features + step definitions
 test/                     # Minitest request tests and fixtures
 ```

@@ -51,6 +51,15 @@ Results are stored in `analyses.results` (jsonb).
 
 Analyses are gated by credits. `Analysis::CREDIT_COSTS` sets the price (5/10/15), a `sufficient_credits` validation returns `422` with a clear message when the balance is too low, and credits are deducted only after a successful create. A correlation without both questions fails validation instead of erroring inside the service.
 
+## Frontend
+
+- **Stack:** React 19, Vite, React Router, Tailwind CSS v4 and shadcn/ui (Radix primitives), plain JavaScript. Theme tokens (crimson primary, separate severity colors, light and dark) live in `frontend/src/index.css`.
+- **Data:** `src/api/client.js` wraps `fetch`, adds the bearer token and turns the API's `{error}` / `{errors: {field: [...]}}` into readable sentences plus per-field errors for forms. Pages fetch in effects with an `ignore` flag so StrictMode's double run can't apply a stale result.
+- **Auth:** `AuthContext` keeps the token and user in `localStorage`, refreshes the user (and credit balance) on load and after an analysis, and logs out cleanly on a `401`. `RequireAuth` guards owner pages and returns to the requested page after login.
+- **Routing:** every page is lazy-loaded (`React.lazy`), so the chart library only loads with the analysis report. The main bundle is about 355 kB.
+- **Participant flow:** `/take/:id` needs no account. One question per screen (a fieldset with native radios), a review step, and progress kept in `sessionStorage`. Participants see their total score but not the severity label.
+- **Accessibility:** skip link, a page title per route, focus moved to each new screen's heading, labels on every control, 4.5:1 text contrast in both themes, and `prefers-reduced-motion` respected. The only motion is short opacity/transform entrances.
+
 ## API Conventions
 
 - Versioned under `/api/v1`, resources nested where ownership demands it (`scales/:scale_id/questions`).
@@ -62,7 +71,7 @@ Analyses are gated by credits. `Analysis::CREDIT_COSTS` sets the price (5/10/15)
 | Layer | Tool | Covers |
 |---|---|---|
 | Request tests | Minitest (`test/controllers/api/v1/`) | every action: auth failures, Pundit denials, validation errors, destroy guards |
-| E2E / BDD | Cypress + Cucumber (`cypress/e2e/features/`) | authentication, scale management, survey responses, analysis, API security, against the running React app |
+| E2E / BDD | Cypress + Cucumber (`cypress/e2e/features/`) | authentication, scale management, survey responses, analysis reports, API security, against the running React app (29 scenarios) |
 | API collection | Postman + Newman | auth-first collection (register, login) using bearer tokens |
 | CI | GitHub Actions | Brakeman, RuboCop, Minitest |
 

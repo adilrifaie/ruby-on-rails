@@ -93,13 +93,18 @@ export default function AnalysisRunner({ surveyId, questions, responseCount, onC
               <FieldLabel key={option.value} htmlFor={`analysis-${option.value}`}>
                 <Field orientation="horizontal">
                   <FieldContent>
-                    <FieldTitle>{option.name}</FieldTitle>
-                    <FieldDescription className="text-pretty">{option.description}</FieldDescription>
-                    <Badge variant="outline" className="mt-1 tabular-nums">
+                    <FieldTitle id={`analysis-${option.value}-title`}>{option.name}</FieldTitle>
+                    <FieldDescription id={`analysis-${option.value}-description`} className="text-pretty">{option.description}</FieldDescription>
+                    <Badge id={`analysis-${option.value}-cost`} variant="outline" className="mt-1 tabular-nums">
                       {option.cost} credits
                     </Badge>
                   </FieldContent>
-                  <RadioGroupItem value={option.value} id={`analysis-${option.value}`} />
+                  <RadioGroupItem
+                    value={option.value}
+                    id={`analysis-${option.value}`}
+                    aria-labelledby={`analysis-${option.value}-title`}
+                    aria-describedby={`analysis-${option.value}-description analysis-${option.value}-cost`}
+                  />
                 </Field>
               </FieldLabel>
             ))}

@@ -1,17 +1,30 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import { Toaster } from "@/components/ui/sonner";
+import { Spinner } from "@/components/ui/spinner";
 import RequireAuth from "./auth/RequireAuth";
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import ScaleBuilderPage from "./pages/ScaleBuilderPage";
-import SurveyDetailPage from "./pages/SurveyDetailPage";
-import PublicSurveyPage from "./pages/PublicSurveyPage";
-import ResponseThanksPage from "./pages/ResponseThanksPage";
-import ResponsePage from "./pages/ResponsePage";
-import AnalysisReportPage from "./pages/AnalysisReportPage";
+
+// Each page is its own chunk, so e.g. the chart library only loads with the analysis report.
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ScaleBuilderPage = lazy(() => import("./pages/ScaleBuilderPage"));
+const SurveyDetailPage = lazy(() => import("./pages/SurveyDetailPage"));
+const PublicSurveyPage = lazy(() => import("./pages/PublicSurveyPage"));
+const ResponseThanksPage = lazy(() => import("./pages/ResponseThanksPage"));
+const ResponsePage = lazy(() => import("./pages/ResponsePage"));
+const AnalysisReportPage = lazy(() => import("./pages/AnalysisReportPage"));
+
+// Shown while a page's chunk loads. It fades in after a short delay so fast loads don't flash a spinner.
+function PageFallback() {
+  return (
+    <div className="flex animate-in justify-center pt-16 text-muted-foreground delay-300 duration-300 fill-mode-both fade-in">
+      <Spinner className="size-6" aria-label="Loading page" />
+    </div>
+  );
+}
 
 // Participant-facing pages get a minimal header with no account navigation.
 const isParticipantPath = (pathname) => pathname.startsWith("/take/") || /^\/responses\/[^/]+\/thanks$/.test(pathname);
@@ -34,22 +47,24 @@ export default function App() {
       <AppHeader minimal={isParticipantPath(pathname)} />
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-[max(1rem,env(safe-area-inset-left))] pt-8 pb-16 outline-none">
         <div key={pageKey(pathname)} className="animate-in duration-300 ease-out fade-in slide-in-from-bottom-2">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/take/:id" element={<PublicSurveyPage />} />
-            <Route path="/responses/:id/thanks" element={<ResponseThanksPage />} />
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/take/:id" element={<PublicSurveyPage />} />
+              <Route path="/responses/:id/thanks" element={<ResponseThanksPage />} />
 
-            <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
-            <Route path="/scales/new" element={<RequireAuth><ScaleBuilderPage /></RequireAuth>} />
-            <Route path="/scales/:id" element={<RequireAuth><ScaleBuilderPage /></RequireAuth>} />
-            <Route path="/surveys/:id" element={<RequireAuth><SurveyDetailPage /></RequireAuth>} />
-            <Route path="/responses/:id" element={<RequireAuth><ResponsePage /></RequireAuth>} />
-            <Route path="/analyses/:id" element={<RequireAuth><AnalysisReportPage /></RequireAuth>} />
+              <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+              <Route path="/scales/new" element={<RequireAuth><ScaleBuilderPage /></RequireAuth>} />
+              <Route path="/scales/:id" element={<RequireAuth><ScaleBuilderPage /></RequireAuth>} />
+              <Route path="/surveys/:id" element={<RequireAuth><SurveyDetailPage /></RequireAuth>} />
+              <Route path="/responses/:id" element={<RequireAuth><ResponsePage /></RequireAuth>} />
+              <Route path="/analyses/:id" element={<RequireAuth><AnalysisReportPage /></RequireAuth>} />
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
       <Toaster position="bottom-right" />
