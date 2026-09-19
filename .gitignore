@@ -37,3 +37,14 @@ documentation/
 
 # Ignore node_modules
 node_modules/
+# Ignore generated test output (Cypress runs, Newman reports)
+/cypress/videos/
+/cypress/screenshots/
+/cypress/downloads/
+/newman_report.*
+
+# Ignore the root package-lock (Cypress is installed with --no-package-lock)
+/package-lock.json
+
+# Ignore editor settings
+.vscode/
