@@ -20,6 +20,13 @@ module Api
         assert_response :success
       end
 
+      test "index returns only the current user's surveys" do
+        get api_v1_surveys_path, headers: auth_headers(@owner), as: :json
+        ids = JSON.parse(response.body).map { |survey| survey["id"] }
+        assert_includes ids, @survey.id
+        assert_not_includes ids, surveys(:two).id
+      end
+
       test "show returns a survey" do
         get api_v1_survey_path(@survey), headers: auth_headers(@owner), as: :json
         assert_response :success

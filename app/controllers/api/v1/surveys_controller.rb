@@ -6,7 +6,7 @@ module Api
       def index
         page = [ (params[:page] || 1).to_i, 1 ].max
         per = [ (params[:per] || 25).to_i, 1 ].max
-        @surveys = Survey.includes(:scale, :user).order(:id).offset((page - 1) * per).limit(per)
+        @surveys = current_user.surveys.includes(:scale, :user).order(:id).offset((page - 1) * per).limit(per)
       end
 
       def show

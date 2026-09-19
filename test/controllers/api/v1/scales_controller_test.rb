@@ -20,6 +20,13 @@ module Api
         assert_kind_of Array, JSON.parse(response.body)
       end
 
+      test "index returns only the current user's scales" do
+        get api_v1_scales_path, headers: auth_headers(@owner), as: :json
+        ids = JSON.parse(response.body).map { |scale| scale["id"] }
+        assert_includes ids, @scale.id
+        assert_not_includes ids, scales(:two).id
+      end
+
       test "show returns a scale" do
         get api_v1_scale_path(@scale), headers: auth_headers(@owner), as: :json
         assert_response :success

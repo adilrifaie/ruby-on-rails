@@ -4,7 +4,7 @@ module Api
       def index
         page = [ (params[:page] || 1).to_i, 1 ].max
         per = [ (params[:per] || 25).to_i, 1 ].max
-        @scales = Scale.includes(:user).order(:id).offset((page - 1) * per).limit(per)
+        @scales = current_user.scales.includes(:user).order(:id).offset((page - 1) * per).limit(per)
       end
 
       def show

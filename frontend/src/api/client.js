@@ -76,7 +76,7 @@ export const api = {
   getUser: (id) => request(`/users/${id}`),
   updateProfile: (id, params) => request(`/users/${id}`, { method: "PATCH", body: { user: params } }),
 
-  listScales: (page = 1) => request(`/scales?page=${page}`),
+  listScales: (page = 1, per = 25) => request(`/scales?page=${page}&per=${per}`),
   getScale: (id) => request(`/scales/${id}`),
   createScale: (params) => request("/scales", { method: "POST", body: { scale: params } }),
   updateScale: (id, params) => request(`/scales/${id}`, { method: "PATCH", body: { scale: params } }),
@@ -87,7 +87,7 @@ export const api = {
   updateQuestion: (id, params) => request(`/questions/${id}`, { method: "PATCH", body: { question: params } }),
   destroyQuestion: (scaleId, id) => request(`/scales/${scaleId}/questions/${id}`, { method: "DELETE" }),
 
-  listSurveys: (page = 1) => request(`/surveys?page=${page}`),
+  listSurveys: (page = 1, per = 25) => request(`/surveys?page=${page}&per=${per}`),
   getSurvey: (id, { auth = true } = {}) => request(`/surveys/${id}`, { auth }),
   createSurvey: (params) => request("/surveys", { method: "POST", body: { survey: params } }),
   updateSurvey: (id, params) => request(`/surveys/${id}`, { method: "PATCH", body: { survey: params } }),
@@ -97,7 +97,7 @@ export const api = {
   getResponse: (id) => request(`/responses/${id}`),
   listResponses: (surveyId) => request(`/responses?survey_id=${surveyId}`),
 
-  listAnalyses: (page = 1) => request(`/analyses?page=${page}`),
+  listAnalyses: (page = 1, per = 25) => request(`/analyses?page=${page}&per=${per}`),
   getAnalysis: (id) => request(`/analyses/${id}`),
   createAnalysis: (params) => request("/analyses", { method: "POST", body: { analysis: params } }),
   getAnalysisReport: (id) => request(`/analyses/${id}/report`),

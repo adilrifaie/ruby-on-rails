@@ -80,7 +80,7 @@ Everything except login, registration, `GET /surveys/:id` and response submissio
 | Responses | `POST /responses` (public), `GET /responses`, `GET /responses/:id`, `GET /responses/:id/export` |
 | Analyses | `GET /analyses`, `GET /analyses/:id`, `POST /analyses`, `GET /analyses/:id/report` |
 
-- `index` actions take `page` and `per` params.
+- `index` actions take `page` and `per` params. `GET /scales`, `GET /surveys` and `GET /analyses` return only the signed-in user's own records.
 - `DELETE` returns `422` instead of cascading when a scale still has surveys or a survey still has responses.
 - Responses cannot be updated or deleted once submitted.
 - Request bodies are wrapped by resource. Sample payloads are in the `documentation/` folder (`login.json`, `scale.json`, ...).

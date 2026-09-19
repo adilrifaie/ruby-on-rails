@@ -26,7 +26,7 @@ const FEATURES = [
 
 const STEPS = [
   { title: "Build", body: "Write your questions and set each answer range." },
-  { title: "Publish", body: "Lock the scale so every response is scored the same way." },
+  { title: "Publish", body: "Mark the scale ready so you can create surveys from it." },
   { title: "Collect", body: "Create a survey and send its link to participants." },
   { title: "Analyze", body: "Review scores and severity bands, then run statistics." },
 ];

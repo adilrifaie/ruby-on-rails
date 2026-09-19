@@ -13,7 +13,7 @@ Feature: Authentication
     Given I am on the register page
     When I register with a new email and password "Password123!"
     Then I should be on the dashboard
-    And I should see "Credit balance:"
+    And I should see "Credit balance"
     And I should see "20"
 
   Scenario: Log in with valid credentials
