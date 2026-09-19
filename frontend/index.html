@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="description" content="Build, publish and analyze healthcare assessment scales." />
+    <meta name="theme-color" content="#f6f7fb" />
+    <title>Healthcare Scale Platform</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a light/dark flash. Default is light.
+      (function () {
+        var theme = "light";
+        try { theme = localStorage.getItem("theme") === "dark" ? "dark" : "light"; } catch (e) {}
+        document.documentElement.classList.toggle("dark", theme === "dark");
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", theme === "dark" ? "#11152a" : "#f6f7fb");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
