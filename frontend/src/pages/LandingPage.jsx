@@ -158,8 +158,6 @@ export default function LandingPage() {
           Scores are screening aids, not a diagnosis. Interpret results alongside clinical judgment.
         </p>
         <p className="m-0 text-pretty">
-          Started as a YZM301 Software Implementation and Testing course project, then rebuilt as a full-stack
-          Ruby on Rails and React platform.{" "}
           <a href="https://github.com/adilrifaie/ruby-on-rails" className="font-medium text-primary" translate="no">
             View source on GitHub
           </a>
