@@ -15,7 +15,8 @@ Two separate apps. The React client holds no business logic beyond presentation.
 The central idea is that a **`Scale` is data, not code**:
 
 - A `Scale` has ordered `Question`s (`position` unique per scale, each with its own `min_value`/`max_value`).
-- A `Scale` carries `scoring_bands`, a jsonb array such as `[{"label":"Low","min":0,"max":4}, ...]`.
+- A `Scale` carries `scoring_bands`, a jsonb array such as `[{"label":"Low","min":0,"max":4}, ...]`, validated for labels, whole-number ranges and overlaps.
+- Publishing locks a scale. Its questions and scoring bands can no longer change, so every response to it is scored against the same instrument. A scale needs at least one question to be published.
 - A `Response` stores one `Answer` per question. `Answer#value` is validated against that question's range, and `(response_id, question_id)` is unique at the database level.
 - `Response#calculate_score` is `answers.sum(:value)`. `Response#severity_band` looks that score up in the scale's bands.
 

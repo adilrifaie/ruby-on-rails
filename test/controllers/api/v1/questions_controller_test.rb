@@ -52,6 +52,31 @@ module Api
         assert_response :no_content
       end
 
+      test "create is blocked once the scale is published" do
+        @scale.update!(status: "published")
+        assert_no_difference("Question.count") do
+          post api_v1_scale_questions_path(@scale), params: { question: { text: "Q1", position: 1, min_value: 0, max_value: 4 } }, headers: auth_headers(@owner), as: :json
+        end
+        assert_response :unprocessable_entity
+      end
+
+      test "update is blocked once the scale is published" do
+        question = @scale.questions.create!(text: "Q1", position: 1, min_value: 0, max_value: 4)
+        @scale.update!(status: "published")
+        patch api_v1_scale_question_path(@scale, question), params: { question: { text: "Changed" } }, headers: auth_headers(@owner), as: :json
+        assert_response :unprocessable_entity
+        assert_equal "Q1", question.reload.text
+      end
+
+      test "destroy is blocked once the scale is published" do
+        question = @scale.questions.create!(text: "Q1", position: 1, min_value: 0, max_value: 4)
+        @scale.update!(status: "published")
+        assert_no_difference("Question.count") do
+          delete api_v1_scale_question_path(@scale, question), headers: auth_headers(@owner), as: :json
+        end
+        assert_response :unprocessable_entity
+      end
+
       test "destroy blocks deletion when the question has answers" do
         question = @scale.questions.create!(text: "Q1", position: 1, min_value: 0, max_value: 4)
         responses(:one).answers.create!(question: question, value: 2)

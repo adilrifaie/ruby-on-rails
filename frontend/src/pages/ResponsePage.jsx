@@ -35,7 +35,7 @@ export default function ResponsePage() {
       <h1>Response from {response.participant_name}</h1>
       <p>Submitted: {new Date(response.submitted_at).toLocaleString()}</p>
       <p>Score: <strong>{response.score}</strong></p>
-      <p>Severity band: <strong>{response.severity_band}</strong></p>
+      <p>Severity band: <strong>{response.severity_band?.label ?? "None"}</strong></p>
 
       <h2>Answers</h2>
       <ul className="card-list">

@@ -44,6 +44,9 @@ module Api
       def publish
         @scale = Scale.find(params[:id])
         authorize @scale
+        unless @scale.questions.exists?
+          return render json: { error: "Add at least one question before publishing" }, status: :unprocessable_entity
+        end
         @scale.publish
         render :show
       end
@@ -51,7 +54,10 @@ module Api
       private
 
       def scale_params
-        params.require(:scale).permit(:title, :description, :version)
+        permitted = params.require(:scale).permit(:title, :description, :version, scoring_bands: [ :label, :min, :max ])
+        # An empty array is dropped by permit; keep it so a client can clear every band.
+        permitted[:scoring_bands] = [] if params[:scale].key?(:scoring_bands) && params[:scale][:scoring_bands].blank?
+        permitted.to_h
       end
     end
   end

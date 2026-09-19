@@ -16,6 +16,34 @@ Given("I have a draft scale titled {string} with {int} question(s)", (title, cou
   });
 });
 
+Given("I have a published scale titled {string} with {int} question(s)", (title, count) => {
+  cy.apiCreateScale(state.user.token, title, questionsFor(count)).then((scale) => {
+    state.scale = scale;
+    cy.apiPublishScale(state.user.token, scale.id);
+  });
+});
+
+When("I delete question {int}", (number) => {
+  cy.get(`button[aria-label="Delete question ${number}"]`).click();
+  cy.get('[role="alertdialog"]').contains("button", "Delete question").click();
+});
+
+When("I confirm with {string}", (label) => {
+  cy.get('[role="alertdialog"]').contains("button", label).click();
+});
+
+When("I add a question to my scale through the API", () => {
+  cy.apiAuthed(state.user.token, "POST", `/scales/${state.scale.id}/questions`, {
+    question: { text: "Late addition", position: 99, min_value: 0, max_value: 4 },
+  }).then((res) => {
+    state.apiResponse = res;
+  });
+});
+
+Then("I should not see a {string} button", (label) => {
+  cy.contains("button", label).should("not.exist");
+});
+
 When("I open the new scale page", () => {
   cy.visit("/scales/new");
 });

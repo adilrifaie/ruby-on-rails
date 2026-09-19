@@ -83,6 +83,8 @@ Everything except login, registration, `GET /surveys/:id` and response submissio
 - `index` actions take `page` and `per` params. `GET /scales`, `GET /surveys` and `GET /analyses` return only the signed-in user's own records.
 - `DELETE` returns `422` instead of cascading when a scale still has surveys or a survey still has responses.
 - Responses cannot be updated or deleted once submitted.
+- Scoring bands are set with `PATCH /scales/:id` (`{"scale":{"scoring_bands":[{"label":"Low","min":0,"max":4}]}}`). Bands need a label and whole-number `min <= max`, and can't overlap.
+- Publishing needs at least one question, and locks the scale: adding, editing or deleting its questions, or changing its scoring bands, returns `422`. Title, description and version stay editable.
 - Request bodies are wrapped by resource. Sample payloads are in the `documentation/` folder (`login.json`, `scale.json`, ...).
 
 ### Example

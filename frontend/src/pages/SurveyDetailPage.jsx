@@ -82,7 +82,7 @@ export default function SurveyDetailPage() {
             {responses.map((r) => (
               <li key={r.id}>
                 <Link to={`/responses/${r.id}`}>{r.participant_name}</Link>
-                <span>score {r.score} · {r.severity_band}</span>
+                <span>score {r.score}{r.severity_band ? ` · ${r.severity_band.label}` : ""}</span>
               </li>
             ))}
           </ul>
