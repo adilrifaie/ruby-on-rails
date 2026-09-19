@@ -16,15 +16,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adilrifaie/ruby-on-rails.git"
+    "url": "git+https://github.com/adilrifaie/mediscales.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/adilrifaie/ruby-on-rails/issues"
+    "url": "https://github.com/adilrifaie/mediscales/issues"
   },
-  "homepage": "https://github.com/adilrifaie/ruby-on-rails#readme",
+  "homepage": "https://github.com/adilrifaie/mediscales#readme",
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^20.0.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
