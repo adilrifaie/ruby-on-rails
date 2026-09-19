@@ -217,7 +217,7 @@ function Review({ name, questions, answers, onChange, onBack, onSubmit, submitti
               className="h-auto shrink-0 px-0"
               onClick={() => onChange(index + 1)}
               aria-label={`Change your answer to question ${index + 1}`}
-            >
+          >
               Change
             </Button>
           </div>
@@ -258,6 +258,7 @@ export default function PublicSurveyPage() {
   const [name, setName] = useState(() => loadProgress(id).name ?? "");
   const [answers, setAnswers] = useState(() => loadProgress(id).answers ?? {});
   const [returnToReview, setReturnToReview] = useState(false);
+  const [direction, setDirection] = useState("forward");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   usePageTitle(survey?.scale.title);
@@ -338,7 +339,10 @@ export default function PublicSurveyPage() {
 
   // A saved step can be out of range if the survey changed since; fall back to the intro.
   const current = step > total + 1 ? 0 : step;
-  const goTo = (next) => setStep(next);
+  const goTo = (next) => {
+    setDirection(next < current ? "back" : "forward");
+    setStep(next);
+  };
 
   const handleSubmit = async () => {
     setSubmitError(null);
@@ -363,47 +367,53 @@ export default function PublicSurveyPage() {
     <div className="mx-auto max-w-xl">
       <Card className="[--card-spacing:--spacing(6)] sm:[--card-spacing:--spacing(8)]">
         <CardContent>
-          {current === 0 && (
-            <Intro
-              survey={survey}
-              questionCount={total}
-              name={name}
-              setName={setName}
-              headingRef={headingRef}
-              onStart={() => goTo(returnToReview ? total + 1 : 1)}
-            />
-          )}
-          {current >= 1 && current <= total && (
-            <QuestionStep
-              key={questions[current - 1].id}
-              question={questions[current - 1]}
-              number={current}
-              total={total}
-              value={answers[questions[current - 1].id]}
-              onAnswer={(value) => setAnswers((a) => ({ ...a, [questions[current - 1].id]: value }))}
-              onNext={() => goTo(returnToReview ? total + 1 : current + 1)}
-              onBack={() => goTo(current - 1)}
-              isLast={current === total}
-              returnToReview={returnToReview}
-              headingRef={headingRef}
-            />
-          )}
-          {current === total + 1 && (
-            <Review
-              name={name}
-              questions={questions}
-              answers={answers}
-              headingRef={headingRef}
-              submitting={submitting}
-              error={submitError}
-              onBack={() => goTo(total)}
-              onChange={(target) => {
-                setReturnToReview(true);
-                goTo(target);
-              }}
-              onSubmit={handleSubmit}
-            />
-          )}
+          {/* Keyed by screen so each one slides in from the direction the participant is moving. */}
+          <div
+            key={current}
+            className={`animate-in duration-200 ease-out fade-in ${direction === "back" ? "slide-in-from-left-4" : "slide-in-from-right-4"}`}
+          >
+            {current === 0 && (
+              <Intro
+                survey={survey}
+                questionCount={total}
+                name={name}
+                setName={setName}
+                headingRef={headingRef}
+                onStart={() => goTo(returnToReview ? total + 1 : 1)}
+              />
+            )}
+            {current >= 1 && current <= total && (
+              <QuestionStep
+                key={questions[current - 1].id}
+                question={questions[current - 1]}
+                number={current}
+                total={total}
+                value={answers[questions[current - 1].id]}
+                onAnswer={(value) => setAnswers((a) => ({ ...a, [questions[current - 1].id]: value }))}
+                onNext={() => goTo(returnToReview ? total + 1 : current + 1)}
+                onBack={() => goTo(current - 1)}
+                isLast={current === total}
+                returnToReview={returnToReview}
+                headingRef={headingRef}
+              />
+            )}
+            {current === total + 1 && (
+              <Review
+                name={name}
+                questions={questions}
+                answers={answers}
+                headingRef={headingRef}
+                submitting={submitting}
+                error={submitError}
+                onBack={() => goTo(total)}
+                onChange={(target) => {
+                  setReturnToReview(true);
+                  goTo(target);
+                }}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

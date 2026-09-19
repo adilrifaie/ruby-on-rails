@@ -12,7 +12,7 @@ export default function ResponseThanksPage() {
     <div className="mx-auto max-w-xl">
       <Card className="[--card-spacing:--spacing(6)] sm:[--card-spacing:--spacing(8)]">
         <CardContent className="flex flex-col items-center gap-6 text-center">
-          <span className="flex size-14 items-center justify-center rounded-full bg-secondary text-secondary-foreground" aria-hidden="true">
+          <span className="flex size-14 animate-in items-center justify-center rounded-full bg-secondary text-secondary-foreground duration-500 ease-out zoom-in-75 fade-in" aria-hidden="true">
             <CircleCheckIcon className="size-7" />
           </span>
           <div className="flex flex-col gap-2">
@@ -24,7 +24,7 @@ export default function ResponseThanksPage() {
           </div>
 
           {score !== undefined && (
-            <div className="w-full rounded-xl border bg-muted/40 px-6 py-5">
+            <div className="w-full animate-in rounded-xl border bg-muted/40 px-6 py-5 delay-200 duration-500 ease-out fill-mode-both fade-in slide-in-from-bottom-2">
               <p className="m-0 text-sm text-muted-foreground">Your score:</p>
               <p className="m-0 font-heading text-4xl font-semibold tabular-nums">
                 {score}
