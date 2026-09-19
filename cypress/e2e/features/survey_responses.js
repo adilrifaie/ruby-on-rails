@@ -28,7 +28,7 @@ When("I open the public survey link", () => {
 });
 
 When("I enter my name {string}", (name) => {
-  cy.contains("label", "Your name").find("input").type(name);
+  cy.field("Your name").type(name);
 });
 
 When("I answer the questions with {string}", (values) => {

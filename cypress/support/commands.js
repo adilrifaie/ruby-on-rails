@@ -3,6 +3,15 @@
 const api = (path) => `${Cypress.env('apiUrl')}/api/v1${path}`;
 const authHeaders = (token) => ({ Authorization: `Bearer ${token}`, Accept: 'application/json' });
 
+// Finds the form control for a visible label. Works for both label layouts in the app:
+// shadcn fields (<label for="id"> next to the control) and legacy pages (control inside the label).
+Cypress.Commands.add('field', (labelText) => {
+  return cy.contains('label', labelText).then(($label) => {
+    const id = $label.attr('for');
+    return id ? cy.get(`[id="${id}"]`) : cy.wrap($label).find('input, select, textarea');
+  });
+});
+
 Cypress.Commands.add('uniqueEmail', (prefix = 'user') => {
   return cy.wrap(`${prefix}.${Date.now()}${Math.floor(Math.random() * 1000)}@example.com`, { log: false });
 });
@@ -99,8 +108,8 @@ Cypress.Commands.add('apiSubmitResponse', (surveyId, participantName, answers) =
 // Logs in through the React login form
 Cypress.Commands.add('uiLogin', (email, password) => {
   cy.visit('/login');
-  cy.contains('label', 'Email').find('input').type(email);
-  cy.contains('label', 'Password').find('input').type(password);
+  cy.field('Email').type(email);
+  cy.field('Password').type(password);
   cy.contains('button', 'Log in').click();
   cy.url().should('include', '/dashboard');
 });

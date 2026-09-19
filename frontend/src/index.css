@@ -163,6 +163,14 @@
     }
 }
 
+/* Static dot grid behind the landing hero and auth cards (a quiet, CSS-only nod to kexsio's
+   Dot Grid). Fades out radially so it never competes with content. */
+@utility bg-dot-grid {
+  background-image: radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--foreground) 18%, transparent) 1px, transparent 0);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 65% 60% at 50% 40%, black 25%, transparent 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -177,15 +185,15 @@
    once no page uses its class. */
 @layer base {
   h1, h2 { margin-bottom: 0.5em; }
-  p { margin-block: 0.5em; }
+  p:not([data-slot]) { margin-block: 0.5em; }
   a:not([data-slot]) { color: var(--primary); }
 
   form { display: flex; flex-direction: column; gap: 12px; max-width: 480px; }
   .inline-form { max-width: none; }
 
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9em; font-weight: 500; }
+  label:not([data-slot]) { display: flex; flex-direction: column; gap: 4px; font-size: 0.9em; font-weight: 500; }
 
-  input, textarea, select {
+  input:not([data-slot]), textarea:not([data-slot]), select:not([data-slot]) {
     padding: 8px 10px;
     border: 1px solid var(--input);
     border-radius: 8px;

@@ -15,24 +15,55 @@ export function getToken() {
   return token;
 }
 
+const GENERIC_MESSAGES = {
+  Unauthorized: "Your session has expired. Log in again to continue.",
+  Forbidden: "You don't have access to this. It belongs to another account.",
+  "Not found": "This item doesn't exist or was removed.",
+};
+
+const sentence = (text) => {
+  const trimmed = text.trim();
+  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  return /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
+};
+
+const humanizeField = (field) => field.replace(/_id$/, "").replace(/_/g, " ");
+
+// Turns the API's {error: "..."} or {errors: {field: ["msg"]}} into one readable sentence per problem.
+function errorMessage(data, status) {
+  if (typeof data?.error === "string") return GENERIC_MESSAGES[data.error] || sentence(data.error);
+  if (data?.errors && typeof data.errors === "object") {
+    return Object.entries(data.errors)
+      .flatMap(([field, messages]) => [].concat(messages).map((msg) => sentence(field === "base" ? msg : `${humanizeField(field)} ${msg}`)))
+      .join(" ");
+  }
+  return `Something went wrong (error ${status}). Try again in a moment.`;
+}
+
 async function request(path, { method = "GET", body, auth = true } = {}) {
   const headers = { "Content-Type": "application/json", Accept: "application/json" };
   if (auth && token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error("Can't reach the server. Check your connection and try again.");
+  }
 
   if (res.status === 204) return null;
 
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    const message = data?.error || data?.errors ? JSON.stringify(data.error || data.errors) : `Request failed (${res.status})`;
-    const error = new Error(message);
+    const error = new Error(errorMessage(data, res.status));
     error.status = res.status;
+    // Per-field messages ({ email: ["has already been taken"] }) so forms can show them next to inputs.
+    error.fields = data?.errors && typeof data.errors === "object" ? data.errors : {};
     throw error;
   }
 

@@ -3,6 +3,12 @@ Feature: Authentication
   I want to register and log in
   So that I can manage my own scales and surveys
 
+  Scenario: The landing page leads visitors to registration
+    When I visit the landing page
+    Then I should see "Build, share and score healthcare assessment scales"
+    When I click "Create an account"
+    Then I should be on the register page
+
   Scenario: Register a new account through the UI
     Given I am on the register page
     When I register with a new email and password "Password123!"
@@ -18,7 +24,7 @@ Feature: Authentication
   Scenario: Reject a wrong password
     Given a registered user exists
     When I log in through the UI with the password "WrongPassword1!"
-    Then I should see "Invalid email or password"
+    Then I should see "That email and password don't match"
     And I should be on the login page
 
   Scenario: Protected pages redirect anonymous visitors to login

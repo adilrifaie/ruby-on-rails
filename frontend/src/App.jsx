@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import { Toaster } from "@/components/ui/sonner";
 import RequireAuth from "./auth/RequireAuth";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -29,7 +30,7 @@ export default function App() {
       <AppHeader minimal={isParticipantPath(pathname)} />
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-[max(1rem,env(safe-area-inset-left))] pt-8 pb-16 outline-none">
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/take/:id" element={<PublicSurveyPage />} />

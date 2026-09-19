@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
 import UserMenu from "./UserMenu";
 
-function Brand({ asLink = true }) {
+function Brand({ asLink = true, to = "/" }) {
   const content = (
     <>
       <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground" aria-hidden="true">
@@ -18,7 +18,7 @@ function Brand({ asLink = true }) {
   );
 
   return asLink ? (
-    <Link to="/" className="flex items-center gap-2.5 rounded-lg text-foreground no-underline">{content}</Link>
+    <Link to={to} className="flex items-center gap-2.5 rounded-lg text-foreground no-underline">{content}</Link>
   ) : (
     <span className="flex items-center gap-2.5">{content}</span>
   );
@@ -31,7 +31,7 @@ export default function AppHeader({ minimal = false }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-[max(1rem,env(safe-area-inset-left))]">
-        <Brand asLink={!minimal} />
+        <Brand asLink={!minimal} to={user ? "/dashboard" : "/"} />
 
         {!minimal && user && (
           <nav aria-label="Main" className="hidden md:block">

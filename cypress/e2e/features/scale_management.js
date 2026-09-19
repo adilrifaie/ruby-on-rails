@@ -21,7 +21,7 @@ When("I open the new scale page", () => {
 });
 
 When("I create a scale titled {string}", (title) => {
-  cy.contains("label", "Title").find("input").type(title);
+  cy.field("Title").type(title);
   cy.contains("button", "Create scale").click();
 });
 
@@ -30,14 +30,14 @@ When("I open my scale page", () => {
 });
 
 When("I add a question {string} with range {int} to {int}", (text, min, max) => {
-  cy.contains("label", "Text").find("input").type(text);
-  cy.contains("label", "Min value").find("input").clear().type(String(min));
-  cy.contains("label", "Max value").find("input").clear().type(String(max));
+  cy.field("Text").type(text);
+  cy.field("Min value").clear().type(String(min));
+  cy.field("Max value").clear().type(String(max));
   cy.contains("button", "Add question").click();
 });
 
 When("I create a survey titled {string}", (title) => {
-  cy.contains("label", "New survey title").find("input").type(title);
+  cy.field("New survey title").type(title);
   cy.contains("button", "Create survey").click();
 });
 

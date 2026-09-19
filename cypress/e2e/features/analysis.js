@@ -7,13 +7,13 @@ const submitAnalysis = () => {
 };
 
 When("I run a {string} analysis", (type) => {
-  cy.contains("label", "Type").find("select").select(type);
+  cy.field("Type").select(type);
   submitAnalysis();
 });
 
 When("I run a correlation analysis between the first and second question", () => {
-  cy.contains("label", "Type").find("select").select("correlation");
-  cy.contains("label", "Question A").find("select").select(1);
-  cy.contains("label", "Question B").find("select").select(2);
+  cy.field("Type").select("correlation");
+  cy.field("Question A").select(1);
+  cy.field("Question B").select(2);
   submitAnalysis();
 });
