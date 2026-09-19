@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api } from "../api/client";
+import PageBreadcrumbs from "../components/PageBreadcrumbs";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const emptyQuestion = { text: "", position: 1, min_value: 0, max_value: 4 };
 
@@ -18,12 +20,18 @@ export default function ScaleBuilderPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(!isNew);
   const [newSurveyTitle, setNewSurveyTitle] = useState("");
+  const pageLabel = isNew ? "New scale" : scale?.title;
+  usePageTitle(pageLabel);
 
   useEffect(() => {
     if (isNew) return;
+    // Ignore a response that arrives after this effect was replaced (StrictMode's double run, or a
+    // later id); otherwise a stale fetch can overwrite questions added in the meantime.
+    let ignore = false;
     setLoading(true);
     api.getScale(id)
       .then((data) => {
+        if (ignore) return;
         setScale(data);
         setTitle(data.title);
         setDescription(data.description || "");
@@ -31,8 +39,9 @@ export default function ScaleBuilderPage() {
         setQuestions(data.questions || []);
         setNewQuestion({ ...emptyQuestion, position: (data.questions?.length || 0) + 1 });
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => { if (!ignore) setError(err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, [id, isNew]);
 
   const handleSaveScale = async (e) => {
@@ -98,6 +107,7 @@ export default function ScaleBuilderPage() {
 
   return (
     <div className="scale-builder">
+      <PageBreadcrumbs items={[{ label: "Dashboard", to: "/dashboard" }, { label: pageLabel || "Scale" }]} />
       <h1>{isNew ? "New scale" : scale?.title}</h1>
       {error && <p className="error">{error}</p>}
 

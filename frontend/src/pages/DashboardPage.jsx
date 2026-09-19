@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function DashboardPage() {
+  usePageTitle("Dashboard");
   const { user } = useAuth();
   const [scales, setScales] = useState([]);
   const [surveys, setSurveys] = useState([]);

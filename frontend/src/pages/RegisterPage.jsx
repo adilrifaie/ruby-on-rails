@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function RegisterPage() {
+  usePageTitle("Register");
   const { register } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");

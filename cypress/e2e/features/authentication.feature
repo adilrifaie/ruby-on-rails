@@ -28,5 +28,6 @@ Feature: Authentication
   Scenario: Log out
     Given a registered user exists
     And I am logged in through the UI
-    When I click "Log out"
+    When I log out from the account menu
     Then I should be on the login page
+    And I should see "You're logged out."

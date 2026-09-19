@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import NavBar from "./components/NavBar";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import AppHeader from "./components/AppHeader";
+import { Toaster } from "@/components/ui/sonner";
 import RequireAuth from "./auth/RequireAuth";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,11 +12,22 @@ import ResponseThanksPage from "./pages/ResponseThanksPage";
 import ResponsePage from "./pages/ResponsePage";
 import AnalysisReportPage from "./pages/AnalysisReportPage";
 
+// Participant-facing pages get a minimal header with no account navigation.
+const isParticipantPath = (pathname) => pathname.startsWith("/take/") || /^\/responses\/[^/]+\/thanks$/.test(pathname);
+
 export default function App() {
+  const { pathname } = useLocation();
+
   return (
-    <div className="app">
-      <NavBar />
-      <main className="app-content">
+    <div className="flex min-h-svh flex-col">
+      <a
+        href="#main"
+        className="sr-only rounded-full bg-primary text-sm font-medium text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2"
+      >
+        Skip to content
+      </a>
+      <AppHeader minimal={isParticipantPath(pathname)} />
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-[max(1rem,env(safe-area-inset-left))] pt-8 pb-16 outline-none">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<LoginPage />} />
@@ -33,6 +45,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      <Toaster position="bottom-right" />
     </div>
   );
 }

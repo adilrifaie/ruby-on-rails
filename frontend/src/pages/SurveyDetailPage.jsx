@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
+import PageBreadcrumbs from "../components/PageBreadcrumbs";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function SurveyDetailPage() {
   const { id } = useParams();
@@ -12,6 +15,8 @@ export default function SurveyDetailPage() {
   const [questionBId, setQuestionBId] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  usePageTitle(survey?.title);
+  const { refreshUser } = useAuth();
 
   const loadAnalyses = () => {
     api.listAnalyses().then((all) => setAnalyses(all.filter((a) => a.survey_id === Number(id))));
@@ -38,6 +43,7 @@ export default function SurveyDetailPage() {
         params.question_b_id = questionBId;
       }
       await api.createAnalysis(params);
+      refreshUser();
       loadAnalyses();
     } catch (err) {
       setError(err.message);
@@ -52,6 +58,13 @@ export default function SurveyDetailPage() {
 
   return (
     <div className="survey-detail">
+      <PageBreadcrumbs
+        items={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: survey.scale.title, to: `/scales/${survey.scale.id}` },
+          { label: survey.title },
+        ]}
+      />
       <h1>{survey.title}</h1>
       <p>Scale: {survey.scale.title} · {survey.response_count || 0} responses</p>
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { api, setToken, getToken } from "../api/client";
 
 const AuthContext = createContext(null);
@@ -35,8 +35,23 @@ export function AuthProvider({ children }) {
     persistUser(null);
   }, []);
 
+  // Re-reads the signed-in user (e.g. credits after an analysis). An expired token logs out.
+  const userId = user?.id;
+  const refreshUser = useCallback(async () => {
+    if (!userId) return;
+    try {
+      persistUser(await api.getUser(userId));
+    } catch (err) {
+      if (err.status === 401) logout();
+    }
+  }, [userId, logout]);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
   return (
-    <AuthContext.Provider value={{ user, token: getToken(), login, register, logout, setUser: persistUser }}>
+    <AuthContext.Provider value={{ user, token: getToken(), login, register, logout, refreshUser, setUser: persistUser }}>
       {children}
     </AuthContext.Provider>
   );

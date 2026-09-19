@@ -31,7 +31,9 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
 
   if (!res.ok) {
     const message = data?.error || data?.errors ? JSON.stringify(data.error || data.errors) : `Request failed (${res.status})`;
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = res.status;
+    throw error;
   }
 
   return data;
@@ -40,6 +42,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
 export const api = {
   login: (email, password) => request("/session", { method: "POST", body: { email, password }, auth: false }),
   register: (email, password) => request("/users", { method: "POST", body: { user: { email, password } }, auth: false }),
+  getUser: (id) => request(`/users/${id}`),
   updateProfile: (id, params) => request(`/users/${id}`, { method: "PATCH", body: { user: params } }),
 
   listScales: (page = 1) => request(`/scales?page=${page}`),

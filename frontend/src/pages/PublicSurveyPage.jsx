@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function PublicSurveyPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [survey, setSurvey] = useState(null);
+  usePageTitle(survey?.title);
   const [participantName, setParticipantName] = useState("");
   const [answers, setAnswers] = useState({});
   const [error, setError] = useState(null);
